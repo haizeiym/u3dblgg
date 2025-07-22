@@ -189,8 +189,8 @@ public class LevelEditorUIBuilder
         labelText.color = Color.white;
         labelText.alignment = TextAnchor.MiddleLeft;
         
-        // 创建形状类型按钮
-        string[] shapeTypes = { "圆形", "矩形", "三角形", "菱形" };
+        // 从配置中获取形状类型
+        string[] shapeTypes = LevelEditorConfig.Instance.GetShapeTypeNames();
         levelEditor.shapeTypeButtons = new Button[shapeTypes.Length];
         
         for (int i = 0; i < shapeTypes.Length; i++)
@@ -307,8 +307,8 @@ public class LevelEditorUIBuilder
         labelText.color = Color.white;
         labelText.alignment = TextAnchor.MiddleLeft;
         
-        // 创建球类型按钮
-        string[] ballTypes = { "红球", "蓝球", "绿球" };
+        // 从配置中获取球类型
+        string[] ballTypes = LevelEditorConfig.Instance.GetBallTypeNames();
         levelEditor.ballTypeButtons = new Button[ballTypes.Length];
         
         for (int i = 0; i < ballTypes.Length; i++)

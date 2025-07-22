@@ -60,27 +60,48 @@ public class BallController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     {
         if (image == null || ballData == null) return;
         
-        switch (ballData.ballType)
+        // 从配置中获取球配置
+        BallTypeConfig config = LevelEditorConfig.Instance.GetBallConfig(ballData.ballType);
+        if (config != null)
         {
-            case "红球":
-                image.color = Color.red;
-                break;
-            case "蓝球":
-                image.color = Color.blue;
-                break;
-            case "绿球":
-                image.color = Color.green;
-                break;
-            case "黄球":
-                image.color = Color.yellow;
-                break;
-            default:
-                image.color = Color.red;
-                break;
+            // 使用配置中的颜色
+            image.color = config.color;
+            
+            if (config.sprite != null)
+            {
+                // 使用配置中的自定义图片
+                image.sprite = config.sprite;
+            }
+            else
+            {
+                // 使用默认圆形精灵
+                image.sprite = CreateCircleSprite();
+            }
         }
-        
-        // 创建圆形精灵
-        image.sprite = CreateCircleSprite();
+        else
+        {
+            // 使用默认颜色和精灵
+            switch (ballData.ballType)
+            {
+                case "红球":
+                    image.color = Color.red;
+                    break;
+                case "蓝球":
+                    image.color = Color.blue;
+                    break;
+                case "绿球":
+                    image.color = Color.green;
+                    break;
+                case "黄球":
+                    image.color = Color.yellow;
+                    break;
+                default:
+                    image.color = Color.red;
+                    break;
+            }
+            
+            image.sprite = CreateCircleSprite();
+        }
     }
     
     Sprite CreateCircleSprite()

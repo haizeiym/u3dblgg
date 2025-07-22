@@ -117,7 +117,7 @@ public class LevelEditorUIManager
     {
         if (editorUI.shapeTypeButtons == null) return;
         
-        string[] types = { "圆形", "矩形", "三角形", "菱形" };
+        string[] types = LevelEditorConfig.Instance.GetShapeTypeNames();
         int currentIndex = System.Array.IndexOf(types, currentType);
         
         for (int i = 0; i < editorUI.shapeTypeButtons.Length; i++)
@@ -203,18 +203,25 @@ public class LevelEditorUIManager
             ShapeData shapeData = editorUI.selectedShape.GetShapeData();
             if (shapeData != null)
             {
-                string[] types = { "圆形", "矩形", "三角形", "菱形" };
-                string newType = types[index];
-                
-                Debug.Log($"更新形状类型: {shapeData.shapeType} -> {newType}");
-                
-                shapeData.shapeType = newType;
-                editorUI.selectedShape.UpdateVisual();
-                
-                // 更新按钮状态以反映当前选中的类型
-                UpdateShapeTypeButtons(newType);
-                
-                Debug.Log($"形状类型更新完成: {newType}");
+                string[] types = LevelEditorConfig.Instance.GetShapeTypeNames();
+                if (index >= 0 && index < types.Length)
+                {
+                    string newType = types[index];
+                    
+                    Debug.Log($"更新形状类型: {shapeData.shapeType} -> {newType}");
+                    
+                    shapeData.shapeType = newType;
+                    editorUI.selectedShape.UpdateVisual();
+                    
+                    // 更新按钮状态以反映当前选中的类型
+                    UpdateShapeTypeButtons(newType);
+                    
+                    Debug.Log($"形状类型更新完成: {newType}");
+                }
+                else
+                {
+                    Debug.LogWarning($"形状类型索引超出范围: {index}");
+                }
             }
             else
             {
@@ -252,11 +259,18 @@ public class LevelEditorUIManager
             BallData ballData = editorUI.selectedBall.GetBallData();
             if (ballData != null)
             {
-                string[] types = { "红球", "蓝球", "绿球" };
-                string newType = types[index];
-                ballData.ballType = newType;
-                editorUI.selectedBall.UpdateVisual();
-                UpdateBallTypeButtons(newType);
+                string[] types = LevelEditorConfig.Instance.GetBallTypeNames();
+                if (index >= 0 && index < types.Length)
+                {
+                    string newType = types[index];
+                    ballData.ballType = newType;
+                    editorUI.selectedBall.UpdateVisual();
+                    UpdateBallTypeButtons(newType);
+                }
+                else
+                {
+                    Debug.LogWarning($"球类型索引超出范围: {index}");
+                }
             }
         }
     }
@@ -264,7 +278,7 @@ public class LevelEditorUIManager
     void UpdateBallTypeButtons(string currentType)
     {
         if (editorUI.ballTypeButtons == null) return;
-        string[] types = { "红球", "蓝球", "绿球" };
+        string[] types = LevelEditorConfig.Instance.GetBallTypeNames();
         int currentIndex = System.Array.IndexOf(types, currentType);
         for (int i = 0; i < editorUI.ballTypeButtons.Length; i++)
         {

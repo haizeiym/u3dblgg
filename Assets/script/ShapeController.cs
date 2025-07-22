@@ -66,28 +66,48 @@ public class ShapeController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         
         Debug.Log($"更新形状外观: {shapeData.shapeType}");
         
-        switch (shapeData.shapeType)
+        // 从配置中获取形状配置
+        ShapeTypeConfig config = LevelEditorConfig.Instance.GetShapeConfig(shapeData.shapeType);
+        if (config != null)
         {
-            case "圆形":
-                image.sprite = ShapeSpriteGenerator.CreateCircleSprite();
-                Debug.Log("设置为圆形精灵");
-                break;
-            case "矩形":
-                image.sprite = ShapeSpriteGenerator.CreateRectangleSprite();
-                Debug.Log("设置为矩形精灵");
-                break;
-            case "三角形":
-                image.sprite = ShapeSpriteGenerator.CreateTriangleSprite();
-                Debug.Log("设置为三角形精灵");
-                break;
-            case "菱形":
-                image.sprite = ShapeSpriteGenerator.CreateDiamondSprite();
-                Debug.Log("设置为菱形精灵");
-                break;
-            default:
-                Debug.LogWarning($"未知的形状类型: {shapeData.shapeType}，使用默认圆形");
-                image.sprite = ShapeSpriteGenerator.CreateCircleSprite();
-                break;
+            if (config.sprite != null)
+            {
+                // 使用配置中的自定义图片
+                image.sprite = config.sprite;
+                Debug.Log($"使用配置图片: {config.name}");
+            }
+            else
+            {
+                // 使用默认生成的图片
+                switch (shapeData.shapeType)
+                {
+                    case "圆形":
+                        image.sprite = ShapeSpriteGenerator.CreateCircleSprite();
+                        Debug.Log("使用默认圆形精灵");
+                        break;
+                    case "矩形":
+                        image.sprite = ShapeSpriteGenerator.CreateRectangleSprite();
+                        Debug.Log("使用默认矩形精灵");
+                        break;
+                    case "三角形":
+                        image.sprite = ShapeSpriteGenerator.CreateTriangleSprite();
+                        Debug.Log("使用默认三角形精灵");
+                        break;
+                    case "菱形":
+                        image.sprite = ShapeSpriteGenerator.CreateDiamondSprite();
+                        Debug.Log("使用默认菱形精灵");
+                        break;
+                    default:
+                        Debug.LogWarning($"未知的形状类型: {shapeData.shapeType}，使用默认圆形");
+                        image.sprite = ShapeSpriteGenerator.CreateCircleSprite();
+                        break;
+                }
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"未找到形状配置: {shapeData.shapeType}，使用默认圆形");
+            image.sprite = ShapeSpriteGenerator.CreateCircleSprite();
         }
     }
     

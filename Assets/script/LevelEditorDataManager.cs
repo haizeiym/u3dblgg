@@ -50,21 +50,28 @@ public class LevelEditorDataManager
     {
         if (editorUI.currentLayer != null)
         {
-            string[] types = { "圆形", "矩形", "三角形", "菱形" };
-            string shapeType = types[editorUI.currentShapeTypeIndex];
-            ShapeData newShape = new ShapeData(shapeType, Vector2.zero, 0f);
-            editorUI.currentLayer.shapes.Add(newShape);
-            GameObject newShapeObj = uiManager.CreateShapeObject(newShape);
-            
-            // 自动选中新创建的形状
-            if (newShapeObj != null)
+            string[] types = LevelEditorConfig.Instance.GetShapeTypeNames();
+            if (editorUI.currentShapeTypeIndex >= 0 && editorUI.currentShapeTypeIndex < types.Length)
             {
-                ShapeController controller = newShapeObj.GetComponent<ShapeController>();
-                if (controller != null)
+                string shapeType = types[editorUI.currentShapeTypeIndex];
+                ShapeData newShape = new ShapeData(shapeType, Vector2.zero, 0f);
+                editorUI.currentLayer.shapes.Add(newShape);
+                GameObject newShapeObj = uiManager.CreateShapeObject(newShape);
+                
+                // 自动选中新创建的形状
+                if (newShapeObj != null)
                 {
-                    editorUI.SelectShape(controller);
-                    Debug.Log($"成功创建形状: {shapeType}");
+                    ShapeController controller = newShapeObj.GetComponent<ShapeController>();
+                    if (controller != null)
+                    {
+                        editorUI.SelectShape(controller);
+                        Debug.Log($"成功创建形状: {shapeType}");
+                    }
                 }
+            }
+            else
+            {
+                Debug.LogWarning($"形状类型索引超出范围: {editorUI.currentShapeTypeIndex}");
             }
         }
         else
