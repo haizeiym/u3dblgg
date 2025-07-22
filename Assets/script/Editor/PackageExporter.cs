@@ -35,73 +35,83 @@ public class PackageExporter : EditorWindow
 
     void OnGUI()
     {
-        EditorGUILayout.LabelField("关卡编辑器 Unity包导出", EditorStyles.boldLabel);
-        EditorGUILayout.Space();
-
-        // 包信息
-        EditorGUILayout.BeginVertical("box");
-        EditorGUILayout.LabelField("包信息", EditorStyles.boldLabel);
-        packageName = EditorGUILayout.TextField("包名称:", packageName);
-        packageVersion = EditorGUILayout.TextField("版本号:", packageVersion);
-        EditorGUILayout.EndVertical();
-
-        EditorGUILayout.Space();
-
-        // 导出路径
-        EditorGUILayout.BeginVertical("box");
-        EditorGUILayout.LabelField("导出设置", EditorStyles.boldLabel);
-        EditorGUILayout.BeginHorizontal();
-        exportPath = EditorGUILayout.TextField("导出路径:", exportPath);
-        if (GUILayout.Button("选择", GUILayout.Width(60)))
+        try
         {
-            string selectedPath = EditorUtility.SaveFolderPanel("选择导出路径", exportPath, "");
-            if (!string.IsNullOrEmpty(selectedPath))
+            EditorGUILayout.LabelField("关卡编辑器 Unity包导出", EditorStyles.boldLabel);
+            EditorGUILayout.Space();
+
+            // 包信息
+            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.LabelField("包信息", EditorStyles.boldLabel);
+            packageName = EditorGUILayout.TextField("包名称:", packageName);
+            packageVersion = EditorGUILayout.TextField("版本号:", packageVersion);
+            EditorGUILayout.EndVertical();
+
+            EditorGUILayout.Space();
+
+            // 导出路径
+            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.LabelField("导出设置", EditorStyles.boldLabel);
+            
+            EditorGUILayout.BeginHorizontal();
+            exportPath = EditorGUILayout.TextField("导出路径:", exportPath);
+            if (GUILayout.Button("选择", GUILayout.Width(60)))
             {
-                exportPath = selectedPath;
+                string selectedPath = EditorUtility.SaveFolderPanel("选择导出路径", exportPath, "");
+                if (!string.IsNullOrEmpty(selectedPath))
+                {
+                    exportPath = selectedPath;
+                }
             }
+            EditorGUILayout.EndHorizontal();
+            
+            EditorGUILayout.EndVertical();
+
+            EditorGUILayout.Space();
+
+            // 包含选项
+            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.LabelField("包含内容", EditorStyles.boldLabel);
+            includeScenes = EditorGUILayout.Toggle("包含场景文件", includeScenes);
+            includePrefabs = EditorGUILayout.Toggle("包含预制体", includePrefabs);
+            includeConfig = EditorGUILayout.Toggle("包含配置文件", includeConfig);
+            includeTextures = EditorGUILayout.Toggle("包含纹理资源", includeTextures);
+            includeSavedLevels = EditorGUILayout.Toggle("包含已保存关卡", includeSavedLevels);
+            EditorGUILayout.EndVertical();
+
+            EditorGUILayout.Space();
+
+            // 导出按钮
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("导出Unity包", GUILayout.Height(30)))
+            {
+                ExportPackage();
+            }
+            if (GUILayout.Button("打开导出目录", GUILayout.Width(100), GUILayout.Height(30)))
+            {
+                OpenExportDirectory();
+            }
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.Space();
+
+            // 说明
+            EditorGUILayout.HelpBox(
+                "导出说明:\n" +
+                "• 脚本文件: 自动包含所有关卡编辑器脚本\n" +
+                "• 场景文件: 包含示例场景（可选）\n" +
+                "• 预制体: 包含UI预制体（可选）\n" +
+                "• 配置文件: 包含默认配置（可选）\n" +
+                "• 纹理资源: 包含纹理图片资源（可选）\n" +
+                "• 已保存关卡: 包含用户创建的关卡（可选）",
+                MessageType.Info
+            );
         }
-        EditorGUILayout.EndHorizontal();
-        EditorGUILayout.EndVertical();
-
-        EditorGUILayout.Space();
-
-        // 包含选项
-        EditorGUILayout.BeginVertical("box");
-        EditorGUILayout.LabelField("包含内容", EditorStyles.boldLabel);
-        includeScenes = EditorGUILayout.Toggle("包含场景文件", includeScenes);
-        includePrefabs = EditorGUILayout.Toggle("包含预制体", includePrefabs);
-        includeConfig = EditorGUILayout.Toggle("包含配置文件", includeConfig);
-        includeTextures = EditorGUILayout.Toggle("包含纹理资源", includeTextures);
-        includeSavedLevels = EditorGUILayout.Toggle("包含已保存关卡", includeSavedLevels);
-        EditorGUILayout.EndVertical();
-
-        EditorGUILayout.Space();
-
-        // 导出按钮
-        EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("导出Unity包", GUILayout.Height(30)))
+        catch (System.Exception e)
         {
-            ExportPackage();
+            Debug.LogError($"PackageExporter OnGUI Error: {e.Message}");
+            EditorGUILayout.HelpBox($"界面渲染错误: {e.Message}", MessageType.Error);
         }
-        if (GUILayout.Button("打开导出目录", GUILayout.Width(100), GUILayout.Height(30)))
-        {
-            OpenExportDirectory();
-        }
-        EditorGUILayout.EndHorizontal();
-
-        EditorGUILayout.Space();
-
-        // 说明
-        EditorGUILayout.HelpBox(
-            "导出说明:\n" +
-            "• 脚本文件: 自动包含所有关卡编辑器脚本\n" +
-            "• 场景文件: 包含示例场景（可选）\n" +
-            "• 预制体: 包含UI预制体（可选）\n" +
-            "• 配置文件: 包含默认配置（可选）\n" +
-            "• 纹理资源: 包含纹理图片资源（可选）\n" +
-            "• 已保存关卡: 包含用户创建的关卡（可选）",
-            MessageType.Info
-        );
     }
 
     void ExportPackage()

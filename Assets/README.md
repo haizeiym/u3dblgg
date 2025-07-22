@@ -38,7 +38,7 @@
 ### 🎨 配置编辑器
 - 路径：`Tools → Level Editor → 配置编辑器`
 - 功能：自定义形状类型、球体类型
-- 支持：保存/加载配置到 `/config` 目录
+- 支持：保存/加载配置到 `Assets/config` 目录
 
 ### 📁 关卡管理
 - 路径：`Tools → Level Editor → 关卡管理`

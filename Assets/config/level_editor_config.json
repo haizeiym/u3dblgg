@@ -3,25 +3,25 @@
         {
             "name": "圆形",
             "sprite": {
-                "instanceID": 22692
+                "instanceID": 22808
             }
         },
         {
             "name": "矩形",
             "sprite": {
-                "instanceID": 22768
+                "instanceID": 22784
             }
         },
         {
             "name": "三角形",
             "sprite": {
-                "instanceID": 22734
+                "instanceID": 22800
             }
         },
         {
             "name": "菱形",
             "sprite": {
-                "instanceID": 22728
+                "instanceID": 22812
             }
         }
     ],
@@ -35,7 +35,7 @@
                 "a": 1.0
             },
             "sprite": {
-                "instanceID": 22774
+                "instanceID": 22854
             }
         },
         {
@@ -47,7 +47,7 @@
                 "a": 1.0
             },
             "sprite": {
-                "instanceID": 22756
+                "instanceID": 22834
             }
         },
         {
@@ -59,7 +59,7 @@
                 "a": 1.0
             },
             "sprite": {
-                "instanceID": 22724
+                "instanceID": 22842
             }
         }
     ]

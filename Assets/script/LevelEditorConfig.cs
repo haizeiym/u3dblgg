@@ -40,7 +40,7 @@ public class LevelEditorConfig : ScriptableObject
     public List<ShapeType> shapeTypes = new List<ShapeType>();
     public List<BallType> ballTypes = new List<BallType>();
 
-    private static string ConfigDir => Path.Combine(Application.dataPath, "../config");
+    private static string ConfigDir => Path.Combine(Application.dataPath, "config");
     private static string ConfigPath => Path.Combine(ConfigDir, "level_editor_config.json");
 
     [System.Serializable]

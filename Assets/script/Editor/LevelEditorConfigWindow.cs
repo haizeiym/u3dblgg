@@ -94,13 +94,13 @@ public class LevelEditorConfigWindow : EditorWindow
         if (GUILayout.Button("保存配置"))
         {
             LevelEditorConfig.Instance.SaveConfigToFile();
-            EditorUtility.DisplayDialog("保存成功", "配置已保存到 /config/level_editor_config.json", "确定");
+            EditorUtility.DisplayDialog("保存成功", "配置已保存到 Assets/config/level_editor_config.json", "确定");
         }
 
         if (GUILayout.Button("加载配置"))
         {
             LevelEditorConfig.Instance.LoadConfigFromFile();
-            EditorUtility.DisplayDialog("加载成功", "配置已从 /config/level_editor_config.json 加载", "确定");
+            EditorUtility.DisplayDialog("加载成功", "配置已从 Assets/config/level_editor_config.json 加载", "确定");
         }
 
         if (GUILayout.Button("重置为默认配置"))
