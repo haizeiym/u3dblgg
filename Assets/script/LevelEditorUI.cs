@@ -192,4 +192,30 @@ public class LevelEditorUI : MonoBehaviour
             }
         }
     }
+
+    /// <summary>
+    /// 清空编辑区、层级列表和选中状态
+    /// </summary>
+    public void ClearAllUIAndSelection()
+    {
+        // 清除编辑区所有对象
+        if (editAreaContent)
+        {
+            foreach (Transform child in editAreaContent)
+            {
+                GameObject.DestroyImmediate(child.gameObject);
+            }
+        }
+        // 清除层级列表
+        if (levelListContent)
+        {
+            foreach (Transform child in levelListContent)
+            {
+                GameObject.DestroyImmediate(child.gameObject);
+            }
+        }
+        // 清除选中
+        selectedShape = null;
+        selectedBall = null;
+    }
 } 

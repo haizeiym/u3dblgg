@@ -59,6 +59,7 @@ public class LevelManagerWindow : EditorWindow
             var editorUI = GameObject.FindObjectOfType<LevelEditorUI>();
             if (editorUI != null)
             {
+                editorUI.ClearAllUIAndSelection();
                 editorUI.currentLevel = level;
                 if (level.layers.Count > 0)
                     editorUI.currentLayer = level.layers[0];
