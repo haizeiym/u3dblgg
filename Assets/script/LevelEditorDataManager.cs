@@ -9,6 +9,7 @@ public class LevelEditorDataManager
 {
     private LevelEditorUI editorUI;
     private LevelEditorUIManager uiManager;
+    private string currentLevelFilePath; // 记录当前关卡的文件路径
     
     public LevelEditorDataManager(LevelEditorUI editor)
     {
@@ -185,10 +186,23 @@ public class LevelEditorDataManager
             System.IO.Directory.CreateDirectory(savedLevelsPath);
         }
         
-        // 生成文件名（使用时间戳避免重复）
-        string timestamp = System.DateTime.Now.ToString("yyyyMMdd_HHmmss");
-        string fileName = $"Level_{timestamp}.json";
-        string filePath = System.IO.Path.Combine(savedLevelsPath, fileName);
+        string filePath;
+        
+        // 如果有当前关卡文件路径，则覆盖原文件；否则创建新文件
+        if (!string.IsNullOrEmpty(currentLevelFilePath) && System.IO.File.Exists(currentLevelFilePath))
+        {
+            filePath = currentLevelFilePath;
+            Debug.Log($"覆盖原文件: {filePath}");
+        }
+        else
+        {
+            // 生成文件名（使用时间戳避免重复）
+            string timestamp = System.DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            string fileName = $"Level_{timestamp}.json";
+            filePath = System.IO.Path.Combine(savedLevelsPath, fileName);
+            currentLevelFilePath = filePath; // 记录新文件路径
+            Debug.Log($"创建新文件: {filePath}");
+        }
         
         // 保存到文件
         System.IO.File.WriteAllText(filePath, json);
@@ -230,6 +244,7 @@ public class LevelEditorDataManager
             if (importedLevel != null)
             {
                 editorUI.currentLevel = importedLevel;
+                currentLevelFilePath = latestFile; // 记录文件路径
                 if (importedLevel.layers.Count > 0)
                 {
                     editorUI.currentLayer = importedLevel.layers[0];

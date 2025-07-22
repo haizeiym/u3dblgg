@@ -176,4 +176,20 @@ public class LevelEditorUI : MonoBehaviour
     {
         if (uiManager != null) uiManager.UpdateBallType(index);
     }
+    
+    /// <summary>
+    /// 设置当前关卡的文件路径（用于覆盖保存）
+    /// </summary>
+    public void SetCurrentLevelFilePath(string filePath)
+    {
+        if (dataManager != null)
+        {
+            var field = typeof(LevelEditorDataManager).GetField("currentLevelFilePath", 
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (field != null)
+            {
+                field.SetValue(dataManager, filePath);
+            }
+        }
+    }
 } 
