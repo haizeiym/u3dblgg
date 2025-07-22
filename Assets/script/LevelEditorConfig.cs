@@ -1,80 +1,116 @@
-using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
-/// <summary>
-/// 关卡编辑器配置
-/// 管理形状类型和球类型的自定义配置
-/// </summary>
-[Serializable]
-public class ShapeTypeConfig
+[System.Serializable]
+public class ShapeType
 {
     public string name;
     public Sprite sprite;
-    
-    public ShapeTypeConfig(string typeName, Sprite typeSprite = null)
-    {
-        name = typeName;
-        sprite = typeSprite;
-    }
 }
 
-[Serializable]
-public class BallTypeConfig
+[System.Serializable]
+public class BallType
 {
     public string name;
     public Color color;
     public Sprite sprite;
-    
-    public BallTypeConfig(string typeName, Color typeColor, Sprite typeSprite = null)
-    {
-        name = typeName;
-        color = typeColor;
-        sprite = typeSprite;
-    }
 }
 
-/// <summary>
-/// 关卡编辑器配置管理器
-/// </summary>
-public class LevelEditorConfig
+[CreateAssetMenu(fileName = "LevelEditorConfig", menuName = "LevelEditor/Config", order = 1)]
+public class LevelEditorConfig : ScriptableObject
 {
-    private static LevelEditorConfig instance;
+    private static LevelEditorConfig _instance;
     public static LevelEditorConfig Instance
     {
         get
         {
-            if (instance == null)
+            if (_instance == null)
             {
-                instance = new LevelEditorConfig();
-                instance.InitializeDefaultConfig();
+                _instance = Resources.Load<LevelEditorConfig>("LevelEditorConfig");
+                if (_instance == null)
+                {
+                    _instance = CreateInstance<LevelEditorConfig>();
+                }
             }
-            return instance;
+            return _instance;
         }
     }
-    
-    public List<ShapeTypeConfig> shapeTypes = new List<ShapeTypeConfig>();
-    public List<BallTypeConfig> ballTypes = new List<BallTypeConfig>();
-    
-    /// <summary>
-    /// 初始化默认配置
-    /// </summary>
+
+    public List<ShapeType> shapeTypes = new List<ShapeType>();
+    public List<BallType> ballTypes = new List<BallType>();
+
+    private static string ConfigDir => Path.Combine(Application.dataPath, "../config");
+    private static string ConfigPath => Path.Combine(ConfigDir, "level_editor_config.json");
+
+    [System.Serializable]
+    private class SerializableConfig
+    {
+        public List<ShapeType> shapeTypes;
+        public List<BallType> ballTypes;
+    }
+
+    public void SaveConfigToFile()
+    {
+        if (!Directory.Exists(ConfigDir))
+            Directory.CreateDirectory(ConfigDir);
+
+        var data = new SerializableConfig
+        {
+            shapeTypes = this.shapeTypes,
+            ballTypes = this.ballTypes
+        };
+        string json = JsonUtility.ToJson(data, true);
+        File.WriteAllText(ConfigPath, json);
+        Debug.Log("配置已保存到: " + ConfigPath);
+    }
+
+    public void LoadConfigFromFile()
+    {
+        if (File.Exists(ConfigPath))
+        {
+            string json = File.ReadAllText(ConfigPath);
+            var data = JsonUtility.FromJson<SerializableConfig>(json);
+            if (data != null)
+            {
+                this.shapeTypes = data.shapeTypes ?? new List<ShapeType>();
+                this.ballTypes = data.ballTypes ?? new List<BallType>();
+                Debug.Log("配置已从文件加载: " + ConfigPath);
+            }
+        }
+        else
+        {
+            Debug.LogWarning("配置文件不存在: " + ConfigPath);
+        }
+    }
+
     public void InitializeDefaultConfig()
     {
-        // 默认形状类型
-        shapeTypes.Clear();
-        shapeTypes.Add(new ShapeTypeConfig("圆形"));
-        shapeTypes.Add(new ShapeTypeConfig("矩形"));
-        shapeTypes.Add(new ShapeTypeConfig("三角形"));
-        shapeTypes.Add(new ShapeTypeConfig("菱形"));
-        
-        // 默认球类型
-        ballTypes.Clear();
-        ballTypes.Add(new BallTypeConfig("红球", Color.red));
-        ballTypes.Add(new BallTypeConfig("蓝球", Color.blue));
-        ballTypes.Add(new BallTypeConfig("绿球", Color.green));
+        shapeTypes = new List<ShapeType>
+        {
+            new ShapeType { name = "圆形" },
+            new ShapeType { name = "矩形" },
+            new ShapeType { name = "三角形" },
+            new ShapeType { name = "菱形" }
+        };
+        ballTypes = new List<BallType>
+        {
+            new BallType { name = "红球", color = Color.red },
+            new BallType { name = "蓝球", color = Color.blue },
+            new BallType { name = "绿球", color = Color.green }
+        };
     }
-    
+
+    public void AddShapeType(string name)
+    {
+        shapeTypes.Add(new ShapeType { name = name });
+    }
+
+    public void AddBallType(string name, Color color)
+    {
+        ballTypes.Add(new BallType { name = name, color = color });
+    }
+
     /// <summary>
     /// 获取形状类型名称数组
     /// </summary>
@@ -87,7 +123,7 @@ public class LevelEditorConfig
         }
         return names;
     }
-    
+
     /// <summary>
     /// 获取球类型名称数组
     /// </summary>
@@ -100,11 +136,11 @@ public class LevelEditorConfig
         }
         return names;
     }
-    
+
     /// <summary>
     /// 根据名称获取形状配置
     /// </summary>
-    public ShapeTypeConfig GetShapeConfig(string name)
+    public ShapeType GetShapeConfig(string name)
     {
         foreach (var config in shapeTypes)
         {
@@ -113,11 +149,11 @@ public class LevelEditorConfig
         }
         return shapeTypes.Count > 0 ? shapeTypes[0] : null;
     }
-    
+
     /// <summary>
     /// 根据名称获取球配置
     /// </summary>
-    public BallTypeConfig GetBallConfig(string name)
+    public BallType GetBallConfig(string name)
     {
         foreach (var config in ballTypes)
         {
@@ -126,36 +162,4 @@ public class LevelEditorConfig
         }
         return ballTypes.Count > 0 ? ballTypes[0] : null;
     }
-    
-    /// <summary>
-    /// 添加形状类型
-    /// </summary>
-    public void AddShapeType(string name, Sprite sprite = null)
-    {
-        shapeTypes.Add(new ShapeTypeConfig(name, sprite));
-    }
-    
-    /// <summary>
-    /// 添加球类型
-    /// </summary>
-    public void AddBallType(string name, Color color, Sprite sprite = null)
-    {
-        ballTypes.Add(new BallTypeConfig(name, color, sprite));
-    }
-    
-    /// <summary>
-    /// 移除形状类型
-    /// </summary>
-    public void RemoveShapeType(string name)
-    {
-        shapeTypes.RemoveAll(config => config.name == name);
-    }
-    
-    /// <summary>
-    /// 移除球类型
-    /// </summary>
-    public void RemoveBallType(string name)
-    {
-        ballTypes.RemoveAll(config => config.name == name);
-    }
-} 
+}

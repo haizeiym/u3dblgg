@@ -67,7 +67,7 @@ public class ShapeController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         Debug.Log($"更新形状外观: {shapeData.shapeType}");
         
         // 从配置中获取形状配置
-        ShapeTypeConfig config = LevelEditorConfig.Instance.GetShapeConfig(shapeData.shapeType);
+        ShapeType config = LevelEditorConfig.Instance.GetShapeConfig(shapeData.shapeType);
         if (config != null)
         {
             if (config.sprite != null)

@@ -61,7 +61,7 @@ public class BallController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         if (image == null || ballData == null) return;
         
         // 从配置中获取球配置
-        BallTypeConfig config = LevelEditorConfig.Instance.GetBallConfig(ballData.ballType);
+        BallType config = LevelEditorConfig.Instance.GetBallConfig(ballData.ballType);
         if (config != null)
         {
             // 使用配置中的颜色

@@ -1,0 +1,66 @@
+{
+    "shapeTypes": [
+        {
+            "name": "圆形",
+            "sprite": {
+                "instanceID": 22692
+            }
+        },
+        {
+            "name": "矩形",
+            "sprite": {
+                "instanceID": 22768
+            }
+        },
+        {
+            "name": "三角形",
+            "sprite": {
+                "instanceID": 22734
+            }
+        },
+        {
+            "name": "菱形",
+            "sprite": {
+                "instanceID": 22728
+            }
+        }
+    ],
+    "ballTypes": [
+        {
+            "name": "红球",
+            "color": {
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0,
+                "a": 1.0
+            },
+            "sprite": {
+                "instanceID": 22774
+            }
+        },
+        {
+            "name": "蓝球",
+            "color": {
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0,
+                "a": 1.0
+            },
+            "sprite": {
+                "instanceID": 22756
+            }
+        },
+        {
+            "name": "绿球",
+            "color": {
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0,
+                "a": 1.0
+            },
+            "sprite": {
+                "instanceID": 22724
+            }
+        }
+    ]
+}

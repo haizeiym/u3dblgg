@@ -65,6 +65,9 @@ public class LevelEditorDataManager
     
     public void AddShape()
     {
+        // 强制加载最新配置
+        LevelEditorConfig.Instance.LoadConfigFromFile();
+        
         Debug.Log($"开始添加形状，当前层级: {editorUI.currentLayer?.layerName}");
         
         if (editorUI.currentLayer != null)
@@ -110,6 +113,9 @@ public class LevelEditorDataManager
     
     public void AddBall()
     {
+        // 强制加载最新配置
+        LevelEditorConfig.Instance.LoadConfigFromFile();
+        
         if (editorUI.selectedShape != null)
         {
             ShapeData shapeData = editorUI.selectedShape.GetShapeData();
