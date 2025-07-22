@@ -20,9 +20,13 @@ public class UIComponentBuilder
         
         Image buttonBg = button.AddComponent<Image>();
         buttonBg.color = new Color(0.4f, 0.4f, 0.4f, 1f);
+        buttonBg.raycastTarget = true; // 确保可以接收射线检测
         
         Button buttonComponent = button.AddComponent<Button>();
         buttonComponent.targetGraphic = buttonBg;
+        
+        // 确保按钮有正确的交互设置
+        buttonComponent.interactable = true;
         
         GameObject textObj = new GameObject("Text");
         textObj.transform.SetParent(button.transform, false);

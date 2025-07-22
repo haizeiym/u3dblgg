@@ -45,6 +45,7 @@ public class LevelEditorMenu
         Canvas canvas = Object.FindObjectOfType<Canvas>();
         if (canvas == null)
         {
+            Debug.Log("创建新的Canvas...");
             GameObject canvasObj = new GameObject("LevelEditorCanvas");
             canvas = canvasObj.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -53,7 +54,12 @@ public class LevelEditorMenu
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920, 1080);
             
-            canvasObj.AddComponent<GraphicRaycaster>();
+            GraphicRaycaster raycaster = canvasObj.AddComponent<GraphicRaycaster>();
+            Debug.Log($"Canvas创建完成，GraphicRaycaster: {raycaster != null}");
+        }
+        else
+        {
+            Debug.Log("使用现有Canvas");
         }
         return canvas;
     }
@@ -62,9 +68,15 @@ public class LevelEditorMenu
     {
         if (Object.FindObjectOfType<EventSystem>() == null)
         {
+            Debug.Log("创建EventSystem...");
             GameObject eventSystem = new GameObject("EventSystem");
-            eventSystem.AddComponent<EventSystem>();
-            eventSystem.AddComponent<StandaloneInputModule>();
+            EventSystem eventSystemComponent = eventSystem.AddComponent<EventSystem>();
+            StandaloneInputModule inputModule = eventSystem.AddComponent<StandaloneInputModule>();
+            Debug.Log($"EventSystem创建完成，EventSystem: {eventSystemComponent != null}, InputModule: {inputModule != null}");
+        }
+        else
+        {
+            Debug.Log("使用现有EventSystem");
         }
     }
     

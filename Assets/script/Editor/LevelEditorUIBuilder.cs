@@ -288,6 +288,8 @@ public class LevelEditorUIBuilder
     
     void CreateBallTypeButtons(GameObject parent, Vector2 position)
     {
+        Debug.Log("开始创建球类型按钮...");
+        
         // 创建标签
         GameObject labelObj = new GameObject("BallTypeLabel");
         labelObj.transform.SetParent(parent.transform, false);
@@ -317,9 +319,24 @@ public class LevelEditorUIBuilder
             buttonRect.sizeDelta = new Vector2(0, 20);
             int index = i;
             Button button = buttonObj.GetComponent<Button>();
-            button.onClick.AddListener(() => OnBallTypeButtonClicked(index, ballTypes[index]));
+            
+            // 添加调试信息
+            Debug.Log($"为球类型按钮 {ballTypes[i]} 添加点击事件，索引: {index}");
+            
+            button.onClick.AddListener(() => {
+                Debug.Log($"球类型按钮 {ballTypes[index]} 被点击！");
+                OnBallTypeButtonClicked(index, ballTypes[index]);
+            });
+            
+            // 添加一个简单的测试监听器
+            button.onClick.AddListener(() => {
+                Debug.Log($"测试：球类型按钮 {ballTypes[index]} 的简单点击事件被触发");
+            });
+            
             levelEditor.ballTypeButtons[i] = button;
         }
+        
+        Debug.Log($"球类型按钮创建完成，共创建 {ballTypes.Length} 个按钮");
     }
     
     void CreatePrefabs()
