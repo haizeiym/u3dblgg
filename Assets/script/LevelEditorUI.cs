@@ -29,6 +29,7 @@ public class LevelEditorUI : MonoBehaviour
     public Slider positionYSlider;
     public Slider rotationSlider;
     public Button[] shapeTypeButtons; // 替换Dropdown为按钮数组
+    public Button[] ballTypeButtons; // 新增：球类型按钮数组
     public Button exportButton;
     
     [Header("Prefabs")]
@@ -154,5 +155,10 @@ public class LevelEditorUI : MonoBehaviour
     {
         currentShapeTypeIndex = index;
         if (uiManager != null) uiManager.UpdateType(index);
+    }
+
+    public void UpdateBallType(int index)
+    {
+        if (uiManager != null) uiManager.UpdateBallType(index);
     }
 } 

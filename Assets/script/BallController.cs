@@ -47,7 +47,7 @@ public class BallController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         }
     }
     
-    void UpdateVisual()
+    public void UpdateVisual()
     {
         if (ballData != null && rectTransform != null)
         {

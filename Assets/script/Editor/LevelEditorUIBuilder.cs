@@ -158,8 +158,10 @@ public class LevelEditorUIBuilder
         GameObject rotSlider = UIComponentBuilder.CreateSlider(parent, "旋转", new Vector2(0, 0.6f));
         levelEditor.rotationSlider = rotSlider.GetComponent<Slider>();
         
-        // 创建形状类型按钮列表（替代Dropdown）
+        // 形状类型按钮
         CreateShapeTypeButtons(parent, new Vector2(0, 0.5f));
+        // 球类型按钮
+        CreateBallTypeButtons(parent, new Vector2(0, 0.4f));
         
         GameObject exportButton = UIComponentBuilder.CreateButton(parent, "导出JSON", new Vector2(0, 0.1f));
         levelEditor.exportButton = exportButton.GetComponent<Button>();
@@ -245,6 +247,79 @@ public class LevelEditorUIBuilder
         levelEditor.UpdateShapeType(index);
         
         Debug.Log($"形状类型已更新为: {shapeType}");
+    }
+    
+    /// <summary>
+    /// 球类型按钮点击事件
+    /// </summary>
+    void OnBallTypeButtonClicked(int index, string ballType)
+    {
+        Debug.Log($"点击球类型按钮: {ballType} (索引: {index})");
+        
+        // 检查是否有选中的球
+        if (levelEditor.selectedBall == null)
+        {
+            Debug.LogWarning("没有选中任何球，无法更改类型");
+            return;
+        }
+        
+        // 更新按钮状态（选中/未选中）
+        for (int i = 0; i < levelEditor.ballTypeButtons.Length; i++)
+        {
+            Image buttonBg = levelEditor.ballTypeButtons[i].GetComponent<Image>();
+            if (buttonBg != null)
+            {
+                if (i == index)
+                {
+                    buttonBg.color = new Color(0.2f, 0.6f, 1f, 1f); // 选中状态
+                }
+                else
+                {
+                    buttonBg.color = new Color(0.4f, 0.4f, 0.4f, 1f); // 未选中状态
+                }
+            }
+        }
+        
+        // 调用LevelEditorUI的公共方法更新类型
+        levelEditor.UpdateBallType(index);
+        
+        Debug.Log($"球类型已更新为: {ballType}");
+    }
+    
+    void CreateBallTypeButtons(GameObject parent, Vector2 position)
+    {
+        // 创建标签
+        GameObject labelObj = new GameObject("BallTypeLabel");
+        labelObj.transform.SetParent(parent.transform, false);
+        
+        RectTransform labelRect = labelObj.AddComponent<RectTransform>();
+        labelRect.anchorMin = new Vector2(position.x, position.y);
+        labelRect.anchorMax = new Vector2(position.x + 0.15f, position.y + 0.02f);
+        labelRect.offsetMin = Vector2.zero;
+        labelRect.offsetMax = Vector2.zero;
+        
+        Text labelText = labelObj.AddComponent<Text>();
+        labelText.text = "球类型";
+        labelText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        labelText.fontSize = 12;
+        labelText.color = Color.white;
+        labelText.alignment = TextAnchor.MiddleLeft;
+        
+        // 创建球类型按钮
+        string[] ballTypes = { "红球", "蓝球", "绿球" };
+        levelEditor.ballTypeButtons = new Button[ballTypes.Length];
+        
+        for (int i = 0; i < ballTypes.Length; i++)
+        {
+            Vector2 buttonPos = new Vector2(position.x, position.y - 0.03f - (i * 0.03f));
+            GameObject buttonObj = UIComponentBuilder.CreateButton(parent, ballTypes[i], buttonPos);
+            RectTransform buttonRect = buttonObj.GetComponent<RectTransform>();
+            buttonRect.sizeDelta = new Vector2(0, 20);
+            int index = i;
+            Button button = buttonObj.GetComponent<Button>();
+            button.onClick.AddListener(() => OnBallTypeButtonClicked(index, ballTypes[index]));
+            levelEditor.ballTypeButtons[i] = button;
+        }
     }
     
     void CreatePrefabs()

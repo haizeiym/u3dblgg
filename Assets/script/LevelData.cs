@@ -74,6 +74,7 @@ public static class LevelDataExporter
 public class ExportLevelData
 {
     public string levelName;
+    [SerializeField]
     public List<ExportLayerData> layers;
     public ExportLevelData(LevelData src)
     {
@@ -89,6 +90,7 @@ public class ExportLevelData
 public class ExportLayerData
 {
     public string layerName;
+    [SerializeField]
     public List<ExportShapeData> shapes;
     public ExportLayerData(LayerData src)
     {
@@ -106,6 +108,7 @@ public class ExportShapeData
     public string shapeType;
     public ExportVec2 position;
     public float rotation;
+    [SerializeField]
     public List<ExportBallData> balls;
     public ExportShapeData(ShapeData src)
     {

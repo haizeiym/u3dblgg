@@ -103,6 +103,9 @@ public class LevelEditorUIManager
                 if (editorUI.nameInput) editorUI.nameInput.text = data.ballType;
                 if (editorUI.positionXSlider) editorUI.positionXSlider.value = data.position.x;
                 if (editorUI.positionYSlider) editorUI.positionYSlider.value = data.position.y;
+                
+                // 更新球类型按钮状态
+                UpdateBallTypeButtons(data.ballType);
             }
         }
     }
@@ -240,5 +243,39 @@ public class LevelEditorUIManager
     public GameObject GetLastCreatedShapeObject()
     {
         return refresher.GetLastCreatedShapeObject();
+    }
+
+    public void UpdateBallType(int index)
+    {
+        if (editorUI.selectedBall != null)
+        {
+            BallData ballData = editorUI.selectedBall.GetBallData();
+            if (ballData != null)
+            {
+                string[] types = { "红球", "蓝球", "绿球" };
+                string newType = types[index];
+                ballData.ballType = newType;
+                editorUI.selectedBall.UpdateVisual();
+                UpdateBallTypeButtons(newType);
+            }
+        }
+    }
+
+    void UpdateBallTypeButtons(string currentType)
+    {
+        if (editorUI.ballTypeButtons == null) return;
+        string[] types = { "红球", "蓝球", "绿球" };
+        int currentIndex = System.Array.IndexOf(types, currentType);
+        for (int i = 0; i < editorUI.ballTypeButtons.Length; i++)
+        {
+            if (editorUI.ballTypeButtons[i] != null)
+            {
+                var img = editorUI.ballTypeButtons[i].GetComponent<UnityEngine.UI.Image>();
+                if (img != null)
+                {
+                    img.color = (i == currentIndex) ? new Color(0.2f, 0.6f, 1f, 1f) : new Color(0.4f, 0.4f, 0.4f, 1f);
+                }
+            }
+        }
     }
 } 
