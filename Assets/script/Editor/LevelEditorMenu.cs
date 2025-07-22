@@ -100,8 +100,18 @@ public class LevelEditorMenu
         if (levelEditor.currentLevel == null)
         {
             levelEditor.currentLevel = new LevelData("新关卡");
+        }
+        
+        // 确保至少有一个层级
+        if (levelEditor.currentLevel.layers.Count == 0)
+        {
             levelEditor.currentLayer = new LayerData("默认层级");
             levelEditor.currentLevel.layers.Add(levelEditor.currentLayer);
+        }
+        else if (levelEditor.currentLayer == null)
+        {
+            // 如果层级列表不为空但当前层级为null，选择第一个层级
+            levelEditor.currentLayer = levelEditor.currentLevel.layers[0];
         }
         
         // 刷新UI

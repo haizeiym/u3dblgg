@@ -163,6 +163,10 @@ public class LevelEditorUIBuilder
         // 球类型按钮
         CreateBallTypeButtons(parent, new Vector2(0, 0.4f));
         
+        // 导入导出按钮
+        GameObject importButton = UIComponentBuilder.CreateButton(parent, "导入关卡", new Vector2(0, 0.15f));
+        importButton.GetComponent<Button>().onClick.AddListener(() => levelEditor.ImportLevel());
+        
         GameObject exportButton = UIComponentBuilder.CreateButton(parent, "导出JSON", new Vector2(0, 0.1f));
         levelEditor.exportButton = exportButton.GetComponent<Button>();
     }

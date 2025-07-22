@@ -129,8 +129,8 @@ public class LevelEditorConfigWindow : EditorWindow
         
         if (GUILayout.Button("刷新编辑器"))
         {
-            // 重新创建编辑器UI以应用新配置
-            LevelEditorMenu.SetupLevelEditor();
+            // 只更新配置，不执行一键配置
+            EditorUtility.DisplayDialog("刷新提示", "配置已更新。若需应用UI结构变更，请手动点击‘一键配置’。", "确定");
         }
         
         EditorGUILayout.EndHorizontal();

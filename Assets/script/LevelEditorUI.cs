@@ -85,8 +85,18 @@ public class LevelEditorUI : MonoBehaviour
         if (currentLevel == null)
         {
             currentLevel = new LevelData("新关卡");
+        }
+        
+        // 确保至少有一个层级
+        if (currentLevel.layers.Count == 0)
+        {
             currentLayer = new LayerData("默认层级");
             currentLevel.layers.Add(currentLayer);
+        }
+        else if (currentLayer == null)
+        {
+            // 如果层级列表不为空但当前层级为null，选择第一个层级
+            currentLayer = currentLevel.layers[0];
         }
     }
     
@@ -121,6 +131,11 @@ public class LevelEditorUI : MonoBehaviour
     public void ExportLevel()
     {
         if (dataManager != null) dataManager.ExportLevel();
+    }
+
+    public void ImportLevel()
+    {
+        if (dataManager != null) dataManager.ImportLevel();
     }
     
     public void SelectShape(ShapeController shape)
