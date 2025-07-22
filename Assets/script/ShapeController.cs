@@ -74,6 +74,11 @@ public class ShapeController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             {
                 // 使用配置中的自定义图片
                 image.sprite = config.sprite;
+                // 设置图片大小为原始尺寸
+                if (config.sprite.rect.width > 0 && config.sprite.rect.height > 0)
+                {
+                    image.rectTransform.sizeDelta = new Vector2(config.sprite.rect.width, config.sprite.rect.height);
+                }
                 Debug.Log($"使用配置图片: {config.name}");
             }
             else
