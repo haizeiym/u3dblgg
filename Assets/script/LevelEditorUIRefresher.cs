@@ -27,8 +27,10 @@ public class LevelEditorUIRefresher
                 Object.Destroy(child.gameObject);
             }
             
-            foreach (LayerData layer in editorUI.currentLevel.layers)
+            // 反转顺序显示，确保最新添加的层级在最上面
+            for (int i = editorUI.currentLevel.layers.Count - 1; i >= 0; i--)
             {
+                LayerData layer = editorUI.currentLevel.layers[i];
                 CreateLayerListItem(layer);
             }
         }
@@ -45,6 +47,9 @@ public class LevelEditorUIRefresher
             HorizontalLayoutGroup layout = item.AddComponent<HorizontalLayoutGroup>();
             layout.spacing = 5;
             layout.childAlignment = TextAnchor.MiddleLeft;
+            
+            // 确保新项目添加到列表顶部
+            item.transform.SetAsFirstSibling();
             
             // 层级名称按钮
             GameObject nameButton = new GameObject("NameButton");
@@ -140,23 +145,30 @@ public class LevelEditorUIRefresher
         // 刷新UI以更新颜色显示
         RefreshLayerList();
         RefreshEditArea();
+        
+        Debug.Log($"层级已激活: {layer.layerName}, 激活状态: {layer.isActive}");
     }
     
     public void RefreshEditArea()
     {
         ClearEditArea();
         
-        // 显示所有可见层级的内容
-        foreach (LayerData layer in editorUI.currentLevel.layers)
+        // 显示所有可见层级的内容（按层级顺序，最新的在最上层）
+        for (int i = 0; i < editorUI.currentLevel.layers.Count; i++)
         {
+            LayerData layer = editorUI.currentLevel.layers[i];
             if (layer.isVisible)
             {
                 foreach (ShapeData shape in layer.shapes)
                 {
                     GameObject shapeObj = CreateShapeObject(shape);
                     
-                    // 如果层级未激活，禁用编辑功能
-                    if (!layer.isActive)
+                    // 根据层级激活状态设置编辑权限
+                    if (layer.isActive)
+                    {
+                        EnableObjectEditing(shapeObj);
+                    }
+                    else
                     {
                         DisableObjectEditing(shapeObj);
                     }
@@ -166,8 +178,12 @@ public class LevelEditorUIRefresher
                     {
                         GameObject ballObj = CreateBallObject(ball, shapeObj);
                         
-                        // 如果层级未激活，禁用球的编辑功能
-                        if (!layer.isActive)
+                        // 根据层级激活状态设置球的编辑权限
+                        if (layer.isActive)
+                        {
+                            EnableObjectEditing(ballObj);
+                        }
+                        else
                         {
                             DisableObjectEditing(ballObj);
                         }
@@ -175,6 +191,8 @@ public class LevelEditorUIRefresher
                 }
             }
         }
+        
+        Debug.Log($"刷新编辑区完成，当前激活层级: {editorUI.currentLayer?.layerName}");
     }
     
     /// <summary>
@@ -185,8 +203,44 @@ public class LevelEditorUIRefresher
         // 清除编辑区
         ClearEditArea();
         
-        // 重新显示所有可见层级的内容
-        RefreshEditArea();
+        // 重新显示所有可见层级的内容，确保层级顺序正确
+        for (int i = 0; i < editorUI.currentLevel.layers.Count; i++)
+        {
+            LayerData currentLayer = editorUI.currentLevel.layers[i];
+            if (currentLayer.isVisible)
+            {
+                foreach (ShapeData shape in currentLayer.shapes)
+                {
+                    GameObject shapeObj = CreateShapeObject(shape);
+                    
+                    // 根据层级激活状态设置编辑权限
+                    if (currentLayer.isActive)
+                    {
+                        EnableObjectEditing(shapeObj);
+                    }
+                    else
+                    {
+                        DisableObjectEditing(shapeObj);
+                    }
+                    
+                    // 为每个shape创建其关联的balls
+                    foreach (BallData ball in shape.balls)
+                    {
+                        GameObject ballObj = CreateBallObject(ball, shapeObj);
+                        
+                        // 根据层级激活状态设置球的编辑权限
+                        if (currentLayer.isActive)
+                        {
+                            EnableObjectEditing(ballObj);
+                        }
+                        else
+                        {
+                            DisableObjectEditing(ballObj);
+                        }
+                    }
+                }
+            }
+        }
     }
     
     /// <summary>
@@ -211,10 +265,11 @@ public class LevelEditorUIRefresher
             button.enabled = false;
         }
         
-        // 添加半透明效果
+        // 禁用图像射线检测，防止阻挡下层对象的交互
         Image image = obj.GetComponent<Image>();
         if (image != null)
         {
+            image.raycastTarget = false; // 禁用射线检测
             Color color = image.color;
             color.a = 0.5f; // 设置透明度为50%
             image.color = color;
@@ -224,6 +279,45 @@ public class LevelEditorUIRefresher
         foreach (Transform child in obj.transform)
         {
             DisableObjectEditing(child.gameObject);
+        }
+    }
+    
+    /// <summary>
+    /// 启用对象的编辑功能
+    /// </summary>
+    void EnableObjectEditing(GameObject obj)
+    {
+        // 启用拖拽接口实现
+        var dragHandlers = obj.GetComponents<MonoBehaviour>();
+        foreach (var handler in dragHandlers)
+        {
+            if (handler is IBeginDragHandler || handler is IDragHandler || handler is IEndDragHandler)
+            {
+                handler.enabled = true;
+            }
+        }
+        
+        // 启用点击事件
+        Button button = obj.GetComponent<Button>();
+        if (button != null)
+        {
+            button.enabled = true;
+        }
+        
+        // 启用图像射线检测
+        Image image = obj.GetComponent<Image>();
+        if (image != null)
+        {
+            image.raycastTarget = true; // 启用射线检测
+            Color color = image.color;
+            color.a = 1.0f; // 设置透明度为100%
+            image.color = color;
+        }
+        
+        // 启用所有子对象的交互
+        foreach (Transform child in obj.transform)
+        {
+            EnableObjectEditing(child.gameObject);
         }
     }
     
@@ -276,6 +370,10 @@ public class LevelEditorUIRefresher
             {
                 controller.Initialize(shapeData, editorUI);
             }
+            
+            // 确保新创建的对象在UI层级的最前面（最上层）
+            shapeObj.transform.SetAsLastSibling();
+            
             shapeObjects.Add(shapeObj);
             return shapeObj;
         }
@@ -296,10 +394,17 @@ public class LevelEditorUIRefresher
                 controller.Initialize(ballData, editorUI);
             }
             
-            // 只有独立的球对象（不依附于形状的）才添加到ballObjects列表
+            // 确保球对象在正确的层级位置
             if (parentShape == null)
             {
+                // 独立的球对象放在最上层
+                ballObj.transform.SetAsLastSibling();
                 ballObjects.Add(ballObj);
+            }
+            else
+            {
+                // 依附于形状的球对象放在形状内部的最上层
+                ballObj.transform.SetAsLastSibling();
             }
             
             return ballObj;
