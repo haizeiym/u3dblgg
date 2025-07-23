@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using System.Collections.Generic;
 
 /// <summary>
@@ -40,49 +41,229 @@ public class LevelEditorUIRefresher
             GameObject item = new GameObject("LayerItem");
             item.transform.SetParent(editorUI.levelListContent, false);
             
-            Button button = item.AddComponent<Button>();
-            Text text = item.AddComponent<Text>();
+            // 创建水平布局
+            HorizontalLayoutGroup layout = item.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 5;
+            layout.childAlignment = TextAnchor.MiddleLeft;
+            
+            // 层级名称按钮
+            GameObject nameButton = new GameObject("NameButton");
+            nameButton.transform.SetParent(item.transform, false);
+            
+            Button button = nameButton.AddComponent<Button>();
+            Text text = nameButton.AddComponent<Text>();
             text.text = layer.layerName;
             text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
             text.fontSize = 14;
-            text.color = Color.black;
+            
+            // 根据层级状态设置颜色和透明度
+            if (layer.isActive)
+            {
+                text.color = Color.black;
+                text.fontStyle = FontStyle.Bold;
+            }
+            else
+            {
+                text.color = new Color(0.5f, 0.5f, 0.5f, 0.6f); // 更明显的灰色，带透明度
+                text.fontStyle = FontStyle.Normal;
+            }
             
             button.onClick.AddListener(() => SelectLayer(layer));
+            
+            // 可见性切换按钮
+            GameObject visibilityButton = new GameObject("VisibilityButton");
+            visibilityButton.transform.SetParent(item.transform, false);
+            
+            Button visButton = visibilityButton.AddComponent<Button>();
+            Text visText = visibilityButton.AddComponent<Text>();
+            visText.text = layer.isVisible ? "显示" : "隐藏";
+            visText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            visText.fontSize = 30;
+            
+            // 根据层级激活状态调整可见性按钮的透明度
+            if (layer.isActive)
+            {
+                visText.color = layer.isVisible ? Color.green : Color.gray;
+            }
+            else
+            {
+                visText.color = layer.isVisible ? 
+                    new Color(0, 0.5f, 0, 0.4f) : // 半透明绿色
+                    new Color(0.5f, 0.5f, 0.5f, 0.4f); // 半透明灰色
+            }
+            
+            visButton.onClick.AddListener(() => ToggleLayerVisibility(layer));
+            
+            // 设置按钮大小
+            RectTransform nameRect = nameButton.GetComponent<RectTransform>();
+            nameRect.sizeDelta = new Vector2(100, 20);
+            
+            RectTransform visRect = visibilityButton.GetComponent<RectTransform>();
+            visRect.sizeDelta = new Vector2(60, 20);
+            
+            // 为置灰的层级添加背景色
+            if (!layer.isActive)
+            {
+                Image background = item.AddComponent<Image>();
+                background.color = new Color(0.9f, 0.9f, 0.9f, 0.3f); // 浅灰色背景
+                background.raycastTarget = false; // 不阻挡点击事件
+            }
         }
+    }
+    
+    void ToggleLayerVisibility(LayerData layer)
+    {
+        layer.isVisible = !layer.isVisible;
+        RefreshLayerVisibility(layer); // 使用专门的层级可见性刷新方法
+    }
+    
+    /// <summary>
+    /// 激活指定层级（用于外部调用）
+    /// </summary>
+    public void ActivateLayer(LayerData layer)
+    {
+        SelectLayer(layer);
     }
     
     void SelectLayer(LayerData layer)
     {
+        // 将所有层级置灰
+        foreach (var l in editorUI.currentLevel.layers)
+        {
+            l.isActive = false;
+        }
+        
+        // 激活选中的层级
+        layer.isActive = true;
         editorUI.currentLayer = layer;
+        
+        // 刷新UI以更新颜色显示
+        RefreshLayerList();
         RefreshEditArea();
     }
     
     public void RefreshEditArea()
     {
         ClearEditArea();
-        foreach (ShapeData shape in editorUI.currentLayer.shapes)
+        
+        // 显示所有可见层级的内容
+        foreach (LayerData layer in editorUI.currentLevel.layers)
         {
-            GameObject shapeObj = CreateShapeObject(shape);
-            // 为每个shape创建其关联的balls
-            foreach (BallData ball in shape.balls)
+            if (layer.isVisible)
             {
-                CreateBallObject(ball, shapeObj);
+                foreach (ShapeData shape in layer.shapes)
+                {
+                    GameObject shapeObj = CreateShapeObject(shape);
+                    
+                    // 如果层级未激活，禁用编辑功能
+                    if (!layer.isActive)
+                    {
+                        DisableObjectEditing(shapeObj);
+                    }
+                    
+                    // 为每个shape创建其关联的balls
+                    foreach (BallData ball in shape.balls)
+                    {
+                        GameObject ballObj = CreateBallObject(ball, shapeObj);
+                        
+                        // 如果层级未激活，禁用球的编辑功能
+                        if (!layer.isActive)
+                        {
+                            DisableObjectEditing(ballObj);
+                        }
+                    }
+                }
             }
+        }
+    }
+    
+    /// <summary>
+    /// 刷新指定层级的可见性
+    /// </summary>
+    public void RefreshLayerVisibility(LayerData layer)
+    {
+        // 清除编辑区
+        ClearEditArea();
+        
+        // 重新显示所有可见层级的内容
+        RefreshEditArea();
+    }
+    
+    /// <summary>
+    /// 禁用对象的编辑功能
+    /// </summary>
+    void DisableObjectEditing(GameObject obj)
+    {
+        // 禁用拖拽接口实现
+        var dragHandlers = obj.GetComponents<MonoBehaviour>();
+        foreach (var handler in dragHandlers)
+        {
+            if (handler is IBeginDragHandler || handler is IDragHandler || handler is IEndDragHandler)
+            {
+                handler.enabled = false;
+            }
+        }
+        
+        // 禁用点击事件
+        Button button = obj.GetComponent<Button>();
+        if (button != null)
+        {
+            button.enabled = false;
+        }
+        
+        // 添加半透明效果
+        Image image = obj.GetComponent<Image>();
+        if (image != null)
+        {
+            Color color = image.color;
+            color.a = 0.5f; // 设置透明度为50%
+            image.color = color;
+        }
+        
+        // 禁用所有子对象的交互
+        foreach (Transform child in obj.transform)
+        {
+            DisableObjectEditing(child.gameObject);
         }
     }
     
     void ClearEditArea()
     {
+        // 清理所有形状对象（包括其子对象）
         foreach (GameObject obj in shapeObjects)
         {
-            if (obj) Object.Destroy(obj);
+            if (obj) 
+            {
+                // 销毁形状及其所有子对象
+                Object.DestroyImmediate(obj);
+            }
         }
+        
+        // 清理独立的球对象
         foreach (GameObject obj in ballObjects)
         {
-            if (obj) Object.Destroy(obj);
+            if (obj && obj.transform.parent == editorUI.editAreaContent) 
+            {
+                // 只销毁直接位于编辑区的球对象
+                Object.DestroyImmediate(obj);
+            }
         }
+        
         shapeObjects.Clear();
         ballObjects.Clear();
+        
+        // 额外清理：确保编辑区没有任何残留对象
+        if (editorUI.editAreaContent)
+        {
+            for (int i = editorUI.editAreaContent.childCount - 1; i >= 0; i--)
+            {
+                Transform child = editorUI.editAreaContent.GetChild(i);
+                if (child != null)
+                {
+                    Object.DestroyImmediate(child.gameObject);
+                }
+            }
+        }
     }
     
     public GameObject CreateShapeObject(ShapeData shapeData)
@@ -114,7 +295,13 @@ public class LevelEditorUIRefresher
             {
                 controller.Initialize(ballData, editorUI);
             }
-            ballObjects.Add(ballObj);
+            
+            // 只有独立的球对象（不依附于形状的）才添加到ballObjects列表
+            if (parentShape == null)
+            {
+                ballObjects.Add(ballObj);
+            }
+            
             return ballObj;
         }
         return null;

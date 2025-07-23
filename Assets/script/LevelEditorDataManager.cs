@@ -47,8 +47,15 @@ public class LevelEditorDataManager
     
     public void AddLayer()
     {
+        // 将所有现有层级置灰
+        foreach (var layer in editorUI.currentLevel.layers)
+        {
+            layer.isActive = false;
+        }
+        
+        // 创建新层级并插入到顶部
         LayerData newLayer = new LayerData($"层级{editorUI.currentLevel.layers.Count + 1}");
-        editorUI.currentLevel.layers.Add(newLayer);
+        editorUI.currentLevel.layers.Insert(0, newLayer); // 插入到列表开头
         editorUI.currentLayer = newLayer;
         editorUI.RefreshUI();
         ClearEditArea();
@@ -71,7 +78,7 @@ public class LevelEditorDataManager
         
         Debug.Log($"开始添加形状，当前层级: {editorUI.currentLayer?.layerName}");
         
-        if (editorUI.currentLayer != null)
+        if (editorUI.currentLayer != null && editorUI.currentLayer.isActive)
         {
             string[] types = LevelEditorConfig.Instance.GetShapeTypeNames();
             if (editorUI.currentShapeTypeIndex >= 0 && editorUI.currentShapeTypeIndex < types.Length)
@@ -106,6 +113,10 @@ public class LevelEditorDataManager
                 Debug.LogWarning($"形状类型索引超出范围: {editorUI.currentShapeTypeIndex}");
             }
         }
+        else if (editorUI.currentLayer != null && !editorUI.currentLayer.isActive)
+        {
+            Debug.LogWarning("无法添加图形：当前层级未激活，请先激活该层级");
+        }
         else
         {
             Debug.LogWarning("当前没有可用的层级");
@@ -117,7 +128,7 @@ public class LevelEditorDataManager
         // 强制加载最新配置
         LevelEditorConfig.Instance.LoadConfigFromFile();
         
-        if (editorUI.selectedShape != null)
+        if (editorUI.selectedShape != null && editorUI.currentLayer != null && editorUI.currentLayer.isActive)
         {
             ShapeData shapeData = editorUI.selectedShape.GetShapeData();
             if (shapeData != null)
@@ -140,9 +151,17 @@ public class LevelEditorDataManager
                 }
             }
         }
-        else
+        else if (editorUI.selectedShape != null && editorUI.currentLayer != null && !editorUI.currentLayer.isActive)
+        {
+            Debug.LogWarning("无法添加球：当前层级未激活，请先激活该层级");
+        }
+        else if (editorUI.selectedShape == null)
         {
             Debug.LogWarning("请先选择一个形状，然后点击添加球");
+        }
+        else
+        {
+            Debug.LogWarning("当前没有可用的层级");
         }
     }
     

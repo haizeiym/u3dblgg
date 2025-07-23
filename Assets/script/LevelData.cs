@@ -19,10 +19,14 @@ public class LayerData
 {
     public string layerName;
     public List<ShapeData> shapes = new List<ShapeData>();
+    public bool isVisible = true; // 层级是否可见
+    public bool isActive = true;  // 层级是否激活（非置灰状态）
 
     public LayerData(string name)
     {
         layerName = name;
+        isVisible = true;
+        isActive = true;
     }
 }
 

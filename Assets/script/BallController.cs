@@ -133,12 +133,25 @@ public class BallController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     
     public void OnBeginDrag(PointerEventData eventData)
     {
+        // 检查当前层级是否激活
+        if (editorUI != null && editorUI.currentLayer != null && !editorUI.currentLayer.isActive)
+        {
+            Debug.LogWarning("无法拖拽：当前层级未激活");
+            return;
+        }
+        
         dragOffset = rectTransform.anchoredPosition - eventData.position;
         SetSelected(true);
     }
     
     public void OnDrag(PointerEventData eventData)
     {
+        // 检查当前层级是否激活
+        if (editorUI != null && editorUI.currentLayer != null && !editorUI.currentLayer.isActive)
+        {
+            return;
+        }
+        
         Vector2 newPosition = eventData.position + dragOffset;
         rectTransform.anchoredPosition = newPosition;
         
@@ -155,6 +168,13 @@ public class BallController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     
     public void OnPointerClick(PointerEventData eventData)
     {
+        // 检查当前层级是否激活
+        if (editorUI != null && editorUI.currentLayer != null && !editorUI.currentLayer.isActive)
+        {
+            Debug.LogWarning("无法选择：当前层级未激活");
+            return;
+        }
+        
         SetSelected(true);
         if (editorUI != null)
         {
