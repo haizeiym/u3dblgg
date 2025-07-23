@@ -1672,6 +1672,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2064143663093736528}
+  - component: {fileID: 4351261250527386802}
   m_Layer: 0
   m_Name: EditAreaContent
   m_TagString: Untagged
@@ -1699,6 +1700,14 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 115.5}
   m_SizeDelta: {x: 0, y: -230.99}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &4351261250527386802
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2064143663093736531}
+  m_CullTransparentMesh: 1
 --- !u!1 &2064143663096096020
 GameObject:
   m_ObjectHideFlags: 0
@@ -1709,7 +1718,6 @@ GameObject:
   m_Component:
   - component: {fileID: 2064143663096096021}
   - component: {fileID: 2064143663096096019}
-  - component: {fileID: 2064143663096096018}
   m_Layer: 0
   m_Name: CenterPanel
   m_TagString: Untagged
@@ -1747,36 +1755,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2064143663096096020}
   m_CullTransparentMesh: 1
---- !u!114 &2064143663096096018
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2064143663096096020}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 0.1, g: 0.1, b: 0.1, a: 0.5}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 0}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &2064143663193285739
 GameObject:
   m_ObjectHideFlags: 0
@@ -2050,8 +2028,10 @@ MonoBehaviour:
   addLayerButton: {fileID: 2064143663386915470}
   deleteLayerButton: {fileID: 2064143662849385514}
   editAreaContent: {fileID: 2064143663093736528}
+  editAreaBackground: {fileID: 0}
   addShapeButton: {fileID: 2064143662848116438}
   addBallButton: {fileID: 2064143663437331490}
+  backgroundButton: {fileID: 0}
   nameInput: {fileID: 2064143663080755745}
   positionXSlider: {fileID: 2064143664321616064}
   positionYSlider: {fileID: 2064143664459496802}
@@ -2073,12 +2053,17 @@ MonoBehaviour:
     layers:
     - layerName: "\u9ED8\u8BA4\u5C42\u7EA7"
       shapes: []
+      isVisible: 0
+      isActive: 0
   currentLayer:
     layerName: "\u9ED8\u8BA4\u5C42\u7EA7"
     shapes: []
+    isVisible: 0
+    isActive: 0
   selectedShape: {fileID: 0}
   selectedBall: {fileID: 0}
   currentShapeTypeIndex: 2
+  currentBackgroundIndex: 0
 --- !u!1 &2064143663275596300
 GameObject:
   m_ObjectHideFlags: 0

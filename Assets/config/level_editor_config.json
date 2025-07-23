@@ -62,5 +62,27 @@
                 "instanceID": 22766
             }
         }
-    ]
+    ],
+    "backgroundConfigs": [
+        {
+            "name": "新背景",
+            "spritePath": "Assets/Textures/cicle/1.png",
+            "backgroundColor": {
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0,
+                "a": 1.0
+            },
+            "useSprite": true,
+            "spriteScale": {
+                "x": 1.0,
+                "y": 1.0
+            },
+            "spriteOffset": {
+                "x": 0.0,
+                "y": 0.0
+            }
+        }
+    ],
+    "currentBackgroundIndex": 0
 }

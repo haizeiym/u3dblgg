@@ -20,6 +20,7 @@ public class LevelEditorUIManager
     void SetupUI()
     {
         SetupSliders();
+        SetupBackground();
         // 形状类型按钮在LevelEditorUIBuilder中创建和设置
     }
     
@@ -44,6 +45,15 @@ public class LevelEditorUIManager
             editorUI.rotationSlider.minValue = 0;
             editorUI.rotationSlider.maxValue = 360;
             editorUI.rotationSlider.onValueChanged.AddListener(UpdateRotation);
+        }
+    }
+    
+    void SetupBackground()
+    {
+        // 初始化背景
+        if (editorUI != null)
+        {
+            editorUI.ApplyBackground();
         }
     }
     

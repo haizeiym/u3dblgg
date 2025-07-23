@@ -20,8 +20,10 @@ public class LevelEditorUI : MonoBehaviour
     
     [Header("Center Panel - Edit Area")]
     public Transform editAreaContent;
+    public Image editAreaBackground; // 新增：编辑区背景
     public Button addShapeButton;
     public Button addBallButton;
+    public Button backgroundButton; // 新增：背景切换按钮
     
     [Header("Right Panel - Properties")]
     public InputField nameInput;
@@ -42,6 +44,7 @@ public class LevelEditorUI : MonoBehaviour
     public ShapeController selectedShape;
     public BallController selectedBall;
     public int currentShapeTypeIndex = 0; // 0:圆形, 1:矩形, 2:三角形, 3:菱形
+    public int currentBackgroundIndex = 0; // 新增：当前背景索引
     
     // UI管理器
     private LevelEditorUIManager uiManager;
@@ -66,6 +69,7 @@ public class LevelEditorUI : MonoBehaviour
         if (deleteLayerButton) deleteLayerButton.onClick.AddListener(DeleteLayer);
         if (addShapeButton) addShapeButton.onClick.AddListener(AddShape);
         if (addBallButton) addBallButton.onClick.AddListener(AddBall);
+        if (backgroundButton) backgroundButton.onClick.AddListener(SwitchBackground);
         if (exportButton) exportButton.onClick.AddListener(ExportLevel);
         
         SetupPropertyListeners();
@@ -217,5 +221,46 @@ public class LevelEditorUI : MonoBehaviour
         // 清除选中
         selectedShape = null;
         selectedBall = null;
+    }
+    
+    /// <summary>
+    /// 切换背景
+    /// </summary>
+    public void SwitchBackground()
+    {
+        var config = LevelEditorConfig.Instance;
+        currentBackgroundIndex = (currentBackgroundIndex + 1) % config.backgroundConfigs.Count;
+        config.SetCurrentBackground(currentBackgroundIndex);
+        ApplyBackground();
+        Debug.Log($"切换到背景: {currentBackgroundIndex}");
+    }
+    
+    /// <summary>
+    /// 应用背景配置
+    /// </summary>
+    public void ApplyBackground()
+    {
+        if (editAreaBackground == null) return;
+        
+        var config = LevelEditorConfig.Instance;
+        var backgroundConfig = config.GetCurrentBackground();
+        
+        if (backgroundConfig != null)
+        {
+            if (backgroundConfig.useSprite && backgroundConfig.backgroundSprite != null)
+            {
+                editAreaBackground.sprite = backgroundConfig.backgroundSprite;
+                editAreaBackground.color = Color.white;
+                
+                // 设置精灵的缩放和偏移
+                editAreaBackground.rectTransform.sizeDelta = backgroundConfig.backgroundSprite.rect.size * backgroundConfig.spriteScale;
+                editAreaBackground.rectTransform.anchoredPosition = backgroundConfig.spriteOffset;
+            }
+            else
+            {
+                editAreaBackground.sprite = null;
+                editAreaBackground.color = backgroundConfig.backgroundColor;
+            }
+        }
     }
 } 
