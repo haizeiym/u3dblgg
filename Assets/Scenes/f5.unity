@@ -643,10 +643,6 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 1993176118227377192, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 1993176118452586225, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
       propertyPath: ballPrefab
       value: 
@@ -655,18 +651,6 @@ PrefabInstance:
       propertyPath: shapePrefab
       value: 
       objectReference: {fileID: 951800892}
-    - target: {fileID: 1993176118464249294, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1993176118496751348, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1993176118553782139, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 1993176118579858891, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
       propertyPath: m_Name
       value: LevelEditorCanvas
@@ -759,32 +743,12 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 1993176118697026982, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1993176119068373709, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 1993176119072978868, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 1993176119273463950, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 1993176119587525634, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1993176119692024106, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1993176120003475575, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
-      propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

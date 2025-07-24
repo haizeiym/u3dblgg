@@ -75,26 +75,33 @@ public class LevelEditorUIRefresher
             
             button.onClick.AddListener(() => SelectLayer(layer));
             
-            // 可见性切换按钮
+            // 可见性切换按钮 - 优化版本
             GameObject visibilityButton = new GameObject("VisibilityButton");
             visibilityButton.transform.SetParent(item.transform, false);
             
+            // 添加背景图片组件
+            Image visButtonBg = visibilityButton.AddComponent<Image>();
             Button visButton = visibilityButton.AddComponent<Button>();
-            Text visText = visibilityButton.AddComponent<Text>();
-            visText.text = layer.isVisible ? "显示" : "隐藏";
-            visText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-            visText.fontSize = 30;
             
-            // 根据层级激活状态调整可见性按钮的透明度
-            if (layer.isActive)
+            // 设置按钮背景
+            if (layer.isVisible)
             {
-                visText.color = layer.isVisible ? Color.green : Color.gray;
+                // 显示状态：绿色背景 + 眼睛图标
+                visButtonBg.color = new Color(0.2f, 0.8f, 0.2f, 1f); // 鲜艳的绿色
+                visButtonBg.sprite = CreateEyeIcon(true); // 创建眼睛图标
             }
             else
             {
-                visText.color = layer.isVisible ? 
-                    new Color(0, 0.5f, 0, 0.4f) : // 半透明绿色
-                    new Color(0.5f, 0.5f, 0.5f, 0.4f); // 半透明灰色
+                // 隐藏状态：红色背景 + 斜杠眼睛图标
+                visButtonBg.color = new Color(0.8f, 0.2f, 0.2f, 1f); // 鲜艳的红色
+                visButtonBg.sprite = CreateEyeIcon(false); // 创建斜杠眼睛图标
+            }
+            
+            // 根据层级激活状态调整按钮透明度
+            if (!layer.isActive)
+            {
+                Color currentColor = visButtonBg.color;
+                visButtonBg.color = new Color(currentColor.r, currentColor.g, currentColor.b, 0.5f); // 半透明
             }
             
             visButton.onClick.AddListener(() => ToggleLayerVisibility(layer));
@@ -104,7 +111,7 @@ public class LevelEditorUIRefresher
             nameRect.sizeDelta = new Vector2(100, 20);
             
             RectTransform visRect = visibilityButton.GetComponent<RectTransform>();
-            visRect.sizeDelta = new Vector2(60, 20);
+            visRect.sizeDelta = new Vector2(25, 25); // 正方形按钮，更紧凑
             
             // 为置灰的层级添加背景色
             if (!layer.isActive)
@@ -112,6 +119,130 @@ public class LevelEditorUIRefresher
                 Image background = item.AddComponent<Image>();
                 background.color = new Color(0.9f, 0.9f, 0.9f, 0.3f); // 浅灰色背景
                 background.raycastTarget = false; // 不阻挡点击事件
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 创建眼睛图标精灵
+    /// </summary>
+    Sprite CreateEyeIcon(bool isVisible)
+    {
+        // 创建32x32的纹理
+        Texture2D texture = new Texture2D(32, 32);
+        Color[] pixels = new Color[32 * 32];
+        
+        // 默认透明背景
+        for (int i = 0; i < pixels.Length; i++)
+        {
+            pixels[i] = Color.clear;
+        }
+        
+        if (isVisible)
+        {
+            // 绘制眼睛图标（显示状态）
+            DrawEyeIcon(pixels, Color.white);
+        }
+        else
+        {
+            // 绘制斜杠眼睛图标（隐藏状态）
+            DrawEyeIcon(pixels, Color.white);
+            DrawSlashIcon(pixels, Color.red);
+        }
+        
+        texture.SetPixels(pixels);
+        texture.Apply();
+        
+        // 创建精灵
+        Sprite sprite = Sprite.Create(texture, new Rect(0, 0, 32, 32), new Vector2(0.5f, 0.5f));
+        return sprite;
+    }
+    
+    /// <summary>
+    /// 绘制眼睛图标
+    /// </summary>
+    void DrawEyeIcon(Color[] pixels, Color color)
+    {
+        // 眼睛轮廓（椭圆形）
+        for (int y = 8; y < 24; y++)
+        {
+            for (int x = 6; x < 26; x++)
+            {
+                float dx = (x - 16) / 10f;
+                float dy = (y - 16) / 8f;
+                if (dx * dx + dy * dy <= 1f)
+                {
+                    int index = y * 32 + x;
+                    if (index >= 0 && index < pixels.Length)
+                    {
+                        pixels[index] = color;
+                    }
+                }
+            }
+        }
+        
+        // 眼睛瞳孔（圆形）
+        for (int y = 12; y < 20; y++)
+        {
+            for (int x = 12; x < 20; x++)
+            {
+                float dx = (x - 16) / 4f;
+                float dy = (y - 16) / 4f;
+                if (dx * dx + dy * dy <= 1f)
+                {
+                    int index = y * 32 + x;
+                    if (index >= 0 && index < pixels.Length)
+                    {
+                        pixels[index] = Color.black;
+                    }
+                }
+            }
+        }
+        
+        // 眼睛高光（小圆点）
+        for (int y = 13; y < 16; y++)
+        {
+            for (int x = 13; x < 16; x++)
+            {
+                float dx = (x - 14.5f) / 1.5f;
+                float dy = (y - 14.5f) / 1.5f;
+                if (dx * dx + dy * dy <= 1f)
+                {
+                    int index = y * 32 + x;
+                    if (index >= 0 && index < pixels.Length)
+                    {
+                        pixels[index] = Color.white;
+                    }
+                }
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 绘制斜杠图标
+    /// </summary>
+    void DrawSlashIcon(Color[] pixels, Color color)
+    {
+        // 绘制从左上到右下的斜杠
+        for (int i = 0; i < 32; i++)
+        {
+            int x = i;
+            int y = 31 - i;
+            
+            // 绘制粗斜杠（3像素宽）
+            for (int offset = -1; offset <= 1; offset++)
+            {
+                int drawX = x + offset;
+                int drawY = y + offset;
+                
+                if (drawX >= 0 && drawX < 32 && drawY >= 0 && drawY < 32)
+                {
+                    int index = drawY * 32 + drawX;
+                    if (index >= 0 && index < pixels.Length)
+                    {
+                        pixels[index] = color;
+                    }
+                }
             }
         }
     }
@@ -200,6 +331,9 @@ public class LevelEditorUIRefresher
     /// </summary>
     public void RefreshLayerVisibility(LayerData layer)
     {
+        // 更新层级列表中的按钮外观
+        UpdateLayerVisibilityButton(layer);
+        
         // 清除编辑区
         ClearEditArea();
         
@@ -238,6 +372,58 @@ public class LevelEditorUIRefresher
                             DisableObjectEditing(ballObj);
                         }
                     }
+                }
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 更新层级可见性按钮的外观
+    /// </summary>
+    void UpdateLayerVisibilityButton(LayerData layer)
+    {
+        if (editorUI.levelListContent == null) return;
+        
+        // 查找对应的层级列表项
+        foreach (Transform child in editorUI.levelListContent)
+        {
+            // 查找包含该层级名称的按钮
+            Button nameButton = child.GetComponentInChildren<Button>();
+            if (nameButton != null)
+            {
+                Text nameText = nameButton.GetComponent<Text>();
+                if (nameText != null && nameText.text == layer.layerName)
+                {
+                    // 找到对应的层级项，更新其可见性按钮
+                    Button visButton = child.Find("VisibilityButton")?.GetComponent<Button>();
+                    if (visButton != null)
+                    {
+                        Image visButtonBg = visButton.GetComponent<Image>();
+                        if (visButtonBg != null)
+                        {
+                            // 更新按钮背景和图标
+                            if (layer.isVisible)
+                            {
+                                // 显示状态：绿色背景 + 眼睛图标
+                                visButtonBg.color = new Color(0.2f, 0.8f, 0.2f, 1f);
+                                visButtonBg.sprite = CreateEyeIcon(true);
+                            }
+                            else
+                            {
+                                // 隐藏状态：红色背景 + 斜杠眼睛图标
+                                visButtonBg.color = new Color(0.8f, 0.2f, 0.2f, 1f);
+                                visButtonBg.sprite = CreateEyeIcon(false);
+                            }
+                            
+                            // 根据层级激活状态调整按钮透明度
+                            if (!layer.isActive)
+                            {
+                                Color currentColor = visButtonBg.color;
+                                visButtonBg.color = new Color(currentColor.r, currentColor.g, currentColor.b, 0.5f);
+                            }
+                        }
+                    }
+                    break;
                 }
             }
         }
