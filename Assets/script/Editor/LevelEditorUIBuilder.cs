@@ -210,7 +210,10 @@ public class LevelEditorUIBuilder
             // 设置按钮点击事件
             int index = i; // 捕获循环变量
             Button button = buttonObj.GetComponent<Button>();
-            button.onClick.AddListener(() => OnShapeTypeButtonClicked(index, shapeTypes[index]));
+            button.onClick.AddListener(() => {
+                Debug.Log($"形状类型按钮 {shapeTypes[index]} 被点击！");
+                OnShapeTypeButtonClicked(index, shapeTypes[index]);
+            });
             
             levelEditor.shapeTypeButtons[i] = button;
         }
@@ -219,19 +222,12 @@ public class LevelEditorUIBuilder
     /// <summary>
     /// 形状类型按钮点击事件
     /// </summary>
-    void OnShapeTypeButtonClicked(int index, string shapeType)
+    public void OnShapeTypeButtonClicked(int index, string shapeType)
     {
         Debug.Log($"点击形状类型按钮: {shapeType} (索引: {index})");
         
         // 更新当前形状类型索引（用于新建形状时使用）
         levelEditor.currentShapeTypeIndex = index;
-        
-        // 检查是否有选中的形状
-        if (levelEditor.selectedShape == null)
-        {
-            Debug.LogWarning("没有选中任何形状，无法更改类型");
-            return;
-        }
         
         // 更新按钮状态（选中/未选中）
         for (int i = 0; i < levelEditor.shapeTypeButtons.Length; i++)
@@ -250,28 +246,28 @@ public class LevelEditorUIBuilder
             }
         }
         
-        // 调用LevelEditorUI的公共方法更新类型
-        levelEditor.UpdateShapeType(index);
-        
-        Debug.Log($"形状类型已更新为: {shapeType}");
+        // 检查是否有选中的形状，如果有则更新类型
+        if (levelEditor.selectedShape != null)
+        {
+            // 调用LevelEditorUI的公共方法更新类型
+            levelEditor.UpdateShapeType(index);
+            Debug.Log($"形状类型已更新为: {shapeType}");
+        }
+        else
+        {
+            Debug.Log($"已选择形状类型: {shapeType}（用于新建形状）");
+        }
     }
     
     /// <summary>
     /// 球类型按钮点击事件
     /// </summary>
-    void OnBallTypeButtonClicked(int index, string ballType)
+    public void OnBallTypeButtonClicked(int index, string ballType)
     {
         Debug.Log($"点击球类型按钮: {ballType} (索引: {index})");
         
         // 更新当前球类型索引（用于新建球时使用）
         levelEditor.currentBallTypeIndex = index;
-        
-        // 检查是否有选中的球
-        if (levelEditor.selectedBall == null)
-        {
-            Debug.LogWarning("没有选中任何球，无法更改类型");
-            return;
-        }
         
         // 更新按钮状态（选中/未选中）
         for (int i = 0; i < levelEditor.ballTypeButtons.Length; i++)
@@ -290,10 +286,17 @@ public class LevelEditorUIBuilder
             }
         }
         
-        // 调用LevelEditorUI的公共方法更新类型
-        levelEditor.UpdateBallType(index);
-        
-        Debug.Log($"球类型已更新为: {ballType}");
+        // 检查是否有选中的球，如果有则更新类型
+        if (levelEditor.selectedBall != null)
+        {
+            // 调用LevelEditorUI的公共方法更新类型
+            levelEditor.UpdateBallType(index);
+            Debug.Log($"球类型已更新为: {ballType}");
+        }
+        else
+        {
+            Debug.Log($"已选择球类型: {ballType}（用于新建球）");
+        }
     }
     
     public void CreateBallTypeButtons(GameObject parent, Vector2 position)

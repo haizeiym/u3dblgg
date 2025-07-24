@@ -43,20 +43,36 @@ public class LevelEditorConfigWindow : EditorWindow
     {
         var config = LevelEditorConfig.Instance;
         EditorGUILayout.BeginVertical("box");
-        for (int i = 0; i < config.shapeTypes.Count; i++)
+        
+        // 使用反向循环避免删除时的索引问题
+        for (int i = config.shapeTypes.Count - 1; i >= 0; i--)
         {
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField($"形状 {i + 1}:", GUILayout.Width(60));
             config.shapeTypes[i].name = EditorGUILayout.TextField(config.shapeTypes[i].name, GUILayout.Width(100));
             EditorGUILayout.LabelField("图片:", GUILayout.Width(30));
             config.shapeTypes[i].sprite = (Sprite)EditorGUILayout.ObjectField(config.shapeTypes[i].sprite, typeof(Sprite), false, GUILayout.Width(100));
+            
+            bool shouldDelete = false;
             if (GUILayout.Button("删除", GUILayout.Width(50)))
             {
-                config.shapeTypes.RemoveAt(i);
-                break;
+                shouldDelete = true;
             }
+            
             EditorGUILayout.EndHorizontal();
+            
+            // 在GUI布局结束后执行删除操作
+            if (shouldDelete)
+            {
+                config.shapeTypes.RemoveAt(i);
+                // 触发配置变更事件
+                config.TriggerShapeTypesChanged();
+                // 强制重绘窗口
+                Repaint();
+                return; // 安全退出，避免继续处理已删除的项目
+            }
         }
+        
         if (GUILayout.Button("添加形状类型"))
         {
             config.AddShapeType("新形状");
@@ -68,7 +84,9 @@ public class LevelEditorConfigWindow : EditorWindow
     {
         var config = LevelEditorConfig.Instance;
         EditorGUILayout.BeginVertical("box");
-        for (int i = 0; i < config.ballTypes.Count; i++)
+        
+        // 使用反向循环避免删除时的索引问题
+        for (int i = config.ballTypes.Count - 1; i >= 0; i--)
         {
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField($"球 {i + 1}:", GUILayout.Width(40));
@@ -77,13 +95,27 @@ public class LevelEditorConfigWindow : EditorWindow
             config.ballTypes[i].color = EditorGUILayout.ColorField(config.ballTypes[i].color, GUILayout.Width(50));
             EditorGUILayout.LabelField("图片:", GUILayout.Width(30));
             config.ballTypes[i].sprite = (Sprite)EditorGUILayout.ObjectField(config.ballTypes[i].sprite, typeof(Sprite), false, GUILayout.Width(100));
+            
+            bool shouldDelete = false;
             if (GUILayout.Button("删除", GUILayout.Width(50)))
             {
-                config.ballTypes.RemoveAt(i);
-                break;
+                shouldDelete = true;
             }
+            
             EditorGUILayout.EndHorizontal();
+            
+            // 在GUI布局结束后执行删除操作
+            if (shouldDelete)
+            {
+                config.ballTypes.RemoveAt(i);
+                // 触发配置变更事件
+                config.TriggerBallTypesChanged();
+                // 强制重绘窗口
+                Repaint();
+                return; // 安全退出，避免继续处理已删除的项目
+            }
         }
+        
         if (GUILayout.Button("添加球类型"))
         {
             config.AddBallType("新球", Color.white);
@@ -110,7 +142,7 @@ public class LevelEditorConfigWindow : EditorWindow
         EditorGUILayout.Space();
         
         // 背景配置列表
-        for (int i = 0; i < config.backgroundConfigs.Count; i++)
+        for (int i = config.backgroundConfigs.Count - 1; i >= 0; i--)
         {
             EditorGUILayout.BeginVertical("box");
             EditorGUILayout.LabelField($"背景 {i + 1}: {config.backgroundConfigs[i].name}", EditorStyles.boldLabel);
@@ -129,6 +161,7 @@ public class LevelEditorConfigWindow : EditorWindow
                 config.backgroundConfigs[i].backgroundColor = EditorGUILayout.ColorField("背景颜色:", config.backgroundConfigs[i].backgroundColor);
             }
             
+            bool shouldDelete = false;
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("设为当前", GUILayout.Width(80)))
             {
@@ -136,13 +169,23 @@ public class LevelEditorConfigWindow : EditorWindow
             }
             if (GUILayout.Button("删除", GUILayout.Width(50)))
             {
-                config.backgroundConfigs.RemoveAt(i);
-                break;
+                shouldDelete = true;
             }
             EditorGUILayout.EndHorizontal();
             
             EditorGUILayout.EndVertical();
             EditorGUILayout.Space();
+            
+            // 在GUI布局结束后执行删除操作
+            if (shouldDelete)
+            {
+                config.backgroundConfigs.RemoveAt(i);
+                // 触发配置变更事件
+                config.TriggerBackgroundConfigsChanged();
+                // 强制重绘窗口
+                Repaint();
+                return; // 安全退出，避免继续处理已删除的项目
+            }
         }
         
         if (GUILayout.Button("添加背景配置"))

@@ -378,16 +378,16 @@ public class LevelEditorConfig : ScriptableObject
     {
         shapeTypes = new List<ShapeType>
         {
-            new ShapeType { name = "圆形", sprite = LoadDefaultShapeSprite("circle") },
-            new ShapeType { name = "矩形", sprite = LoadDefaultShapeSprite("rectangle") },
-            new ShapeType { name = "三角形", sprite = LoadDefaultShapeSprite("triangle") },
-            new ShapeType { name = "菱形", sprite = LoadDefaultShapeSprite("diamond") }
+            new ShapeType { name = "圆形", sprite = LoadDefaultShapeSprite("圆形", "蓝色圆") },
+            new ShapeType { name = "矩形", sprite = LoadDefaultShapeSprite("矩形", "红色花瓣") },
+            new ShapeType { name = "三角形", sprite = LoadDefaultShapeSprite("三角形", "蓝三角") },
+            new ShapeType { name = "菱形", sprite = LoadDefaultShapeSprite("菱形", "蓝色菱形") }
         };
         ballTypes = new List<BallType>
         {
-            new BallType { name = "红球", color = Color.red, sprite = LoadDefaultBallSprite("red") },
-            new BallType { name = "蓝球", color = Color.blue, sprite = LoadDefaultBallSprite("blue") },
-            new BallType { name = "绿球", color = Color.green, sprite = LoadDefaultBallSprite("green") }
+            new BallType { name = "红球", color = Color.red, sprite = LoadDefaultBallSprite("红球", "red") },
+            new BallType { name = "蓝球", color = Color.blue, sprite = LoadDefaultBallSprite("蓝球", "blue") },
+            new BallType { name = "绿球", color = Color.green, sprite = LoadDefaultBallSprite("绿球", "green") }
         };
         
         backgroundConfigs = new List<BackgroundConfig>
@@ -405,12 +405,16 @@ public class LevelEditorConfig : ScriptableObject
     /// <summary>
     /// 加载默认形状精灵
     /// </summary>
-    private Sprite LoadDefaultShapeSprite(string shapeName)
+    private Sprite LoadDefaultShapeSprite(string shapeName, string fileName)
     {
         // 尝试从多个可能的路径加载
         string[] possiblePaths = {
-            $"Assets/Textures/cicle/{shapeName}.png",
+            $"Assets/Textures/pieces/{fileName}.png",
+            $"Assets/Textures/cicle/{fileName}.png",
+            $"Assets/Textures/shapes/{fileName}.png",
+            $"Assets/Sprites/{fileName}.png",
             $"Assets/Textures/pieces/{shapeName}.png",
+            $"Assets/Textures/cicle/{shapeName}.png",
             $"Assets/Textures/shapes/{shapeName}.png",
             $"Assets/Sprites/{shapeName}.png"
         };
@@ -427,17 +431,20 @@ public class LevelEditorConfig : ScriptableObject
             #endif
         }
         
-        Debug.LogWarning($"未找到形状精灵: {shapeName}");
+        Debug.LogWarning($"未找到形状精灵: {shapeName} (尝试的文件名: {fileName})");
         return null;
     }
     
     /// <summary>
     /// 加载默认球精灵
     /// </summary>
-    private Sprite LoadDefaultBallSprite(string ballName)
+    private Sprite LoadDefaultBallSprite(string ballName, string fileName)
     {
         // 尝试从多个可能的路径加载
         string[] possiblePaths = {
+            $"Assets/Textures/ball/{fileName}.png",
+            $"Assets/Textures/balls/{fileName}.png",
+            $"Assets/Sprites/{fileName}.png",
             $"Assets/Textures/ball/{ballName}.png",
             $"Assets/Textures/balls/{ballName}.png",
             $"Assets/Sprites/{ballName}.png"
@@ -455,15 +462,51 @@ public class LevelEditorConfig : ScriptableObject
             #endif
         }
         
-        Debug.LogWarning($"未找到球精灵: {ballName}");
+        Debug.LogWarning($"未找到球精灵: {ballName} (尝试的文件名: {fileName})");
         return null;
     }
 
     public void AddShapeType(string name)
     {
-        shapeTypes.Add(new ShapeType { name = name });
+        // 尝试为新的形状类型找到合适的sprite
+        Sprite sprite = FindSpriteForShape(name);
+        shapeTypes.Add(new ShapeType { name = name, sprite = sprite });
         SaveConfigToFile();
         TriggerShapeTypesChanged();
+    }
+    
+    /// <summary>
+    /// 为形状类型查找合适的sprite
+    /// </summary>
+    private Sprite FindSpriteForShape(string shapeName)
+    {
+        // 尝试从现有的sprite中找到一个合适的
+        string[] searchPaths = {
+            "Assets/Textures/pieces",
+            "Assets/Textures/cicle",
+            "Assets/Textures/shapes",
+            "Assets/Sprites"
+        };
+        
+        foreach (string searchPath in searchPaths)
+        {
+            #if UNITY_EDITOR
+            string[] guids = UnityEditor.AssetDatabase.FindAssets("t:Sprite", new string[] { searchPath });
+            foreach (string guid in guids)
+            {
+                string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+                var sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
+                if (sprite != null)
+                {
+                    Debug.Log($"为形状 '{shapeName}' 找到sprite: {path}");
+                    return sprite;
+                }
+            }
+            #endif
+        }
+        
+        Debug.LogWarning($"未为形状 '{shapeName}' 找到合适的sprite");
+        return null;
     }
     
     /// <summary>
@@ -476,9 +519,44 @@ public class LevelEditorConfig : ScriptableObject
 
     public void AddBallType(string name, Color color)
     {
-        ballTypes.Add(new BallType { name = name, color = color });
+        // 尝试为新的球类型找到合适的sprite
+        Sprite sprite = FindSpriteForBall(name);
+        ballTypes.Add(new BallType { name = name, color = color, sprite = sprite });
         SaveConfigToFile();
         TriggerBallTypesChanged();
+    }
+    
+    /// <summary>
+    /// 为球类型查找合适的sprite
+    /// </summary>
+    private Sprite FindSpriteForBall(string ballName)
+    {
+        // 尝试从现有的sprite中找到一个合适的
+        string[] searchPaths = {
+            "Assets/Textures/ball",
+            "Assets/Textures/balls",
+            "Assets/Sprites"
+        };
+        
+        foreach (string searchPath in searchPaths)
+        {
+            #if UNITY_EDITOR
+            string[] guids = UnityEditor.AssetDatabase.FindAssets("t:Sprite", new string[] { searchPath });
+            foreach (string guid in guids)
+            {
+                string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+                var sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
+                if (sprite != null)
+                {
+                    Debug.Log($"为球 '{ballName}' 找到sprite: {path}");
+                    return sprite;
+                }
+            }
+            #endif
+        }
+        
+        Debug.LogWarning($"未为球 '{ballName}' 找到合适的sprite");
+        return null;
     }
     
     /// <summary>
