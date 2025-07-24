@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using System;
 
 [System.Serializable]
 public class ShapeType
@@ -124,6 +125,8 @@ public class LevelEditorConfig : ScriptableObject
                 if (_instance == null)
                 {
                     _instance = CreateInstance<LevelEditorConfig>();
+                    // 新创建的实例需要初始化默认配置
+                    _instance.InitializeDefaultConfig();
                 }
             }
             return _instance;
@@ -134,6 +137,13 @@ public class LevelEditorConfig : ScriptableObject
     public List<BallType> ballTypes = new List<BallType>();
     public List<BackgroundConfig> backgroundConfigs = new List<BackgroundConfig>();
     public int currentBackgroundIndex = 0;
+    
+    // 配置变更事件
+    public event Action OnShapeTypesChanged;
+    public event Action OnBallTypesChanged;
+    public event Action OnBackgroundConfigsChanged;
+    public event Action OnCurrentBackgroundChanged;
+    public event Action OnConfigReloaded;
 
     private static string ConfigDir => Path.Combine(Application.dataPath, "config");
     private static string ConfigPath => Path.Combine(ConfigDir, "level_editor_config.json");
@@ -150,10 +160,25 @@ public class LevelEditorConfig : ScriptableObject
     }
     
     [System.Serializable]
+    private class SerializableShapeType
+    {
+        public string name;
+        public string spritePath;
+    }
+    
+    [System.Serializable]
+    private class SerializableBallType
+    {
+        public string name;
+        public Color color;
+        public string spritePath;
+    }
+    
+    [System.Serializable]
     private class SerializableConfig
     {
-        public List<ShapeType> shapeTypes;
-        public List<BallType> ballTypes;
+        public List<SerializableShapeType> shapeTypes;
+        public List<SerializableBallType> ballTypes;
         public List<SerializableBackgroundConfig> backgroundConfigs;
         public int currentBackgroundIndex;
     }
@@ -162,6 +187,29 @@ public class LevelEditorConfig : ScriptableObject
     {
         if (!Directory.Exists(ConfigDir))
             Directory.CreateDirectory(ConfigDir);
+
+        // 转换为可序列化的形状配置
+        var serializableShapes = new List<SerializableShapeType>();
+        foreach (var shape in this.shapeTypes)
+        {
+            serializableShapes.Add(new SerializableShapeType
+            {
+                name = shape.name,
+                spritePath = GetSpritePath(shape.sprite)
+            });
+        }
+
+        // 转换为可序列化的球配置
+        var serializableBalls = new List<SerializableBallType>();
+        foreach (var ball in this.ballTypes)
+        {
+            serializableBalls.Add(new SerializableBallType
+            {
+                name = ball.name,
+                color = ball.color,
+                spritePath = GetSpritePath(ball.sprite)
+            });
+        }
 
         // 转换为可序列化的背景配置
         var serializableBackgrounds = new List<SerializableBackgroundConfig>();
@@ -180,14 +228,28 @@ public class LevelEditorConfig : ScriptableObject
 
         var data = new SerializableConfig
         {
-            shapeTypes = this.shapeTypes,
-            ballTypes = this.ballTypes,
+            shapeTypes = serializableShapes,
+            ballTypes = serializableBalls,
             backgroundConfigs = serializableBackgrounds,
             currentBackgroundIndex = this.currentBackgroundIndex
         };
         string json = JsonUtility.ToJson(data, true);
         File.WriteAllText(ConfigPath, json);
         Debug.Log("配置已保存到: " + ConfigPath);
+    }
+    
+    /// <summary>
+    /// 获取Sprite的路径
+    /// </summary>
+    private string GetSpritePath(Sprite sprite)
+    {
+        if (sprite == null) return null;
+        
+        #if UNITY_EDITOR
+        return UnityEditor.AssetDatabase.GetAssetPath(sprite);
+        #else
+        return null;
+        #endif
     }
 
     public void LoadConfigFromFile()
@@ -198,8 +260,36 @@ public class LevelEditorConfig : ScriptableObject
             var data = JsonUtility.FromJson<SerializableConfig>(json);
             if (data != null)
             {
-                this.shapeTypes = data.shapeTypes ?? new List<ShapeType>();
-                this.ballTypes = data.ballTypes ?? new List<BallType>();
+                // 转换形状配置
+                this.shapeTypes = new List<ShapeType>();
+                if (data.shapeTypes != null)
+                {
+                    foreach (var serializableShape in data.shapeTypes)
+                    {
+                        var shape = new ShapeType
+                        {
+                            name = serializableShape.name
+                        };
+                        shape.sprite = LoadSpriteFromPath(serializableShape.spritePath);
+                        this.shapeTypes.Add(shape);
+                    }
+                }
+                
+                // 转换球配置
+                this.ballTypes = new List<BallType>();
+                if (data.ballTypes != null)
+                {
+                    foreach (var serializableBall in data.ballTypes)
+                    {
+                        var ball = new BallType
+                        {
+                            name = serializableBall.name,
+                            color = serializableBall.color
+                        };
+                        ball.sprite = LoadSpriteFromPath(serializableBall.spritePath);
+                        this.ballTypes.Add(ball);
+                    }
+                }
                 
                 // 转换背景配置
                 this.backgroundConfigs = new List<BackgroundConfig>();
@@ -222,28 +312,82 @@ public class LevelEditorConfig : ScriptableObject
                 
                 this.currentBackgroundIndex = data.currentBackgroundIndex;
                 Debug.Log("配置已从文件加载: " + ConfigPath);
+                
+                // 检查配置是否为空，如果为空则初始化默认配置
+                if (this.shapeTypes.Count == 0 && this.ballTypes.Count == 0)
+                {
+                    Debug.Log("加载的配置为空，初始化默认配置");
+                    InitializeDefaultConfig();
+                }
+                
+                // 触发配置重新加载事件
+                TriggerConfigReloaded();
+            }
+            else
+            {
+                Debug.LogWarning("配置文件解析失败，初始化默认配置");
+                InitializeDefaultConfig();
             }
         }
         else
         {
-            Debug.LogWarning("配置文件不存在: " + ConfigPath);
+            Debug.LogWarning("配置文件不存在: " + ConfigPath + "，初始化默认配置");
+            InitializeDefaultConfig();
         }
+    }
+    
+    /// <summary>
+    /// 从路径加载Sprite
+    /// </summary>
+    private Sprite LoadSpriteFromPath(string path)
+    {
+        if (string.IsNullOrEmpty(path)) return null;
+        
+        #if UNITY_EDITOR
+        return UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        #else
+        // 运行时尝试从Resources加载
+        string resourcePath = GetResourcePath(path);
+        if (!string.IsNullOrEmpty(resourcePath))
+        {
+            return Resources.Load<Sprite>(resourcePath);
+        }
+        return null;
+        #endif
+    }
+    
+    /// <summary>
+    /// 获取Resources路径
+    /// </summary>
+    private string GetResourcePath(string assetPath)
+    {
+        if (string.IsNullOrEmpty(assetPath)) return null;
+        
+        // 检查是否在Resources文件夹中
+        int resourcesIndex = assetPath.IndexOf("/Resources/");
+        if (resourcesIndex >= 0)
+        {
+            string relativePath = assetPath.Substring(resourcesIndex + 11); // "/Resources/".Length
+            return Path.ChangeExtension(relativePath, null); // 移除扩展名
+        }
+        
+        return null;
     }
 
     public void InitializeDefaultConfig()
     {
         shapeTypes = new List<ShapeType>
         {
-            new ShapeType { name = "圆形" },
-            new ShapeType { name = "矩形" },
-            new ShapeType { name = "三角形" },
-            new ShapeType { name = "菱形" }
+            new ShapeType { name = "圆形", sprite = LoadDefaultShapeSprite("circle") },
+            new ShapeType { name = "矩形", sprite = LoadDefaultShapeSprite("rectangle") },
+            new ShapeType { name = "三角形", sprite = LoadDefaultShapeSprite("triangle") },
+            new ShapeType { name = "菱形", sprite = LoadDefaultShapeSprite("diamond") }
         };
         ballTypes = new List<BallType>
         {
-            new BallType { name = "红球", color = Color.red },
-            new BallType { name = "蓝球", color = Color.blue },
-            new BallType { name = "绿球", color = Color.green }
+            new BallType { name = "红球", color = Color.red, sprite = LoadDefaultBallSprite("red") },
+            new BallType { name = "蓝球", color = Color.blue, sprite = LoadDefaultBallSprite("blue") },
+            new BallType { name = "绿球", color = Color.green, sprite = LoadDefaultBallSprite("green") }
         };
         
         backgroundConfigs = new List<BackgroundConfig>
@@ -252,16 +396,97 @@ public class LevelEditorConfig : ScriptableObject
             new BackgroundConfig { name = "网格背景", backgroundColor = new Color(0.9f, 0.9f, 0.9f), useSprite = false },
             new BackgroundConfig { name = "深色背景", backgroundColor = new Color(0.2f, 0.2f, 0.2f), useSprite = false }
         };
+        
+        // 保存默认配置到文件
+        SaveConfigToFile();
+        Debug.Log("默认配置已初始化并保存到文件");
+    }
+    
+    /// <summary>
+    /// 加载默认形状精灵
+    /// </summary>
+    private Sprite LoadDefaultShapeSprite(string shapeName)
+    {
+        // 尝试从多个可能的路径加载
+        string[] possiblePaths = {
+            $"Assets/Textures/cicle/{shapeName}.png",
+            $"Assets/Textures/pieces/{shapeName}.png",
+            $"Assets/Textures/shapes/{shapeName}.png",
+            $"Assets/Sprites/{shapeName}.png"
+        };
+        
+        foreach (string path in possiblePaths)
+        {
+            #if UNITY_EDITOR
+            var sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            if (sprite != null)
+            {
+                Debug.Log($"找到形状精灵: {path}");
+                return sprite;
+            }
+            #endif
+        }
+        
+        Debug.LogWarning($"未找到形状精灵: {shapeName}");
+        return null;
+    }
+    
+    /// <summary>
+    /// 加载默认球精灵
+    /// </summary>
+    private Sprite LoadDefaultBallSprite(string ballName)
+    {
+        // 尝试从多个可能的路径加载
+        string[] possiblePaths = {
+            $"Assets/Textures/ball/{ballName}.png",
+            $"Assets/Textures/balls/{ballName}.png",
+            $"Assets/Sprites/{ballName}.png"
+        };
+        
+        foreach (string path in possiblePaths)
+        {
+            #if UNITY_EDITOR
+            var sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            if (sprite != null)
+            {
+                Debug.Log($"找到球精灵: {path}");
+                return sprite;
+            }
+            #endif
+        }
+        
+        Debug.LogWarning($"未找到球精灵: {ballName}");
+        return null;
     }
 
     public void AddShapeType(string name)
     {
         shapeTypes.Add(new ShapeType { name = name });
+        SaveConfigToFile();
+        TriggerShapeTypesChanged();
+    }
+    
+    /// <summary>
+    /// 触发形状类型变更事件
+    /// </summary>
+    public void TriggerShapeTypesChanged()
+    {
+        OnShapeTypesChanged?.Invoke();
     }
 
     public void AddBallType(string name, Color color)
     {
         ballTypes.Add(new BallType { name = name, color = color });
+        SaveConfigToFile();
+        TriggerBallTypesChanged();
+    }
+    
+    /// <summary>
+    /// 触发球类型变更事件
+    /// </summary>
+    public void TriggerBallTypesChanged()
+    {
+        OnBallTypesChanged?.Invoke();
     }
 
     /// <summary>
@@ -329,6 +554,16 @@ public class LevelEditorConfig : ScriptableObject
             useSprite = sprite != null
         };
         backgroundConfigs.Add(config);
+        SaveConfigToFile();
+        TriggerBackgroundConfigsChanged();
+    }
+    
+    /// <summary>
+    /// 触发背景配置变更事件
+    /// </summary>
+    public void TriggerBackgroundConfigsChanged()
+    {
+        OnBackgroundConfigsChanged?.Invoke();
     }
     
     /// <summary>
@@ -371,7 +606,17 @@ public class LevelEditorConfig : ScriptableObject
         if (index >= 0 && index < backgroundConfigs.Count)
         {
             currentBackgroundIndex = index;
+            SaveConfigToFile();
+            TriggerCurrentBackgroundChanged();
         }
+    }
+    
+    /// <summary>
+    /// 触发当前背景变更事件
+    /// </summary>
+    public void TriggerCurrentBackgroundChanged()
+    {
+        OnCurrentBackgroundChanged?.Invoke();
     }
     
     /// <summary>
@@ -386,5 +631,13 @@ public class LevelEditorConfig : ScriptableObject
                 bg.SetSpritePath(bg.spritePath);
             }
         }
+    }
+    
+    /// <summary>
+    /// 触发配置重新加载事件
+    /// </summary>
+    public void TriggerConfigReloaded()
+    {
+        OnConfigReloaded?.Invoke();
     }
 }

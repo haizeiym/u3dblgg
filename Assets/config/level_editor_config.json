@@ -2,27 +2,19 @@
     "shapeTypes": [
         {
             "name": "圆形",
-            "sprite": {
-                "instanceID": 23244
-            }
+            "spritePath": "Assets/Textures/pieces/蓝色圆.png"
         },
         {
             "name": "矩形",
-            "sprite": {
-                "instanceID": 23212
-            }
+            "spritePath": "Assets/Textures/pieces/黄色猫猫.png"
         },
         {
             "name": "三角形",
-            "sprite": {
-                "instanceID": 23236
-            }
+            "spritePath": "Assets/Textures/pieces/蓝三角.png"
         },
         {
             "name": "菱形",
-            "sprite": {
-                "instanceID": 23220
-            }
+            "spritePath": "Assets/Textures/pieces/蓝色菱形.png"
         }
     ],
     "ballTypes": [
@@ -30,42 +22,36 @@
             "name": "红球",
             "color": {
                 "r": 1.0,
-                "g": 1.0,
-                "b": 1.0,
+                "g": 0.0,
+                "b": 0.0,
                 "a": 1.0
             },
-            "sprite": {
-                "instanceID": 22778
-            }
+            "spritePath": "Assets/Textures/ball/red.png"
         },
         {
             "name": "蓝球",
             "color": {
-                "r": 1.0,
-                "g": 1.0,
+                "r": 0.0,
+                "g": 0.0,
                 "b": 1.0,
                 "a": 1.0
             },
-            "sprite": {
-                "instanceID": 22758
-            }
+            "spritePath": "Assets/Textures/ball/blue.png"
         },
         {
             "name": "绿球",
             "color": {
-                "r": 1.0,
+                "r": 0.0,
                 "g": 1.0,
-                "b": 1.0,
+                "b": 0.0,
                 "a": 1.0
             },
-            "sprite": {
-                "instanceID": 22766
-            }
+            "spritePath": "Assets/Textures/ball/green.png"
         }
     ],
     "backgroundConfigs": [
         {
-            "name": "新背景",
+            "name": "默认背景",
             "spritePath": "Assets/Textures/cicle/1.png",
             "backgroundColor": {
                 "r": 1.0,

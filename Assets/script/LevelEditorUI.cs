@@ -24,6 +24,7 @@ public class LevelEditorUI : MonoBehaviour
     public Button addShapeButton;
     public Button addBallButton;
     public Button backgroundButton; // 新增：背景切换按钮
+    public Button previewButton; // 新增：预览按钮
     
     [Header("Right Panel - Properties")]
     public InputField nameInput;
@@ -38,17 +39,25 @@ public class LevelEditorUI : MonoBehaviour
     public GameObject shapePrefab;
     public GameObject ballPrefab;
     
+    [Header("Preview")]
+    public ConfigPreviewUI configPreviewUI; // 新增：配置预览UI组件
+    
     // 数据
     public LevelData currentLevel;
     public LayerData currentLayer;
     public ShapeController selectedShape;
     public BallController selectedBall;
     public int currentShapeTypeIndex = 0; // 0:圆形, 1:矩形, 2:三角形, 3:菱形
+    public int currentBallTypeIndex = 0; // 新增：当前球类型索引
     public int currentBackgroundIndex = 0; // 新增：当前背景索引
     
     // UI管理器
     private LevelEditorUIManager uiManager;
     private LevelEditorDataManager dataManager;
+    
+    #if UNITY_EDITOR
+    private IUIUpdater uiUpdater; // 使用接口类型
+    #endif
     
     void Awake()
     {
@@ -61,7 +70,63 @@ public class LevelEditorUI : MonoBehaviour
     {
         uiManager = new LevelEditorUIManager(this);
         dataManager = new LevelEditorDataManager(this);
+        
+        #if UNITY_EDITOR
+        // 初始化UI更新器（在UI构建完成后）
+        StartCoroutine(InitializeUIUpdater());
+        #endif
     }
+    
+    #if UNITY_EDITOR
+    System.Collections.IEnumerator InitializeUIUpdater()
+    {
+        // 等待一帧，确保UI构建完成
+        yield return null;
+        
+        // 尝试使用Editor创建器
+        try
+        {
+            var creatorType = System.Type.GetType("UIUpdaterCreator, Assembly-CSharp-Editor");
+            if (creatorType != null)
+            {
+                var createMethod = creatorType.GetMethod("CreateUIUpdater", 
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                
+                if (createMethod != null)
+                {
+                    uiUpdater = (IUIUpdater)createMethod.Invoke(null, new object[] { this });
+                    Debug.Log("UI更新器已通过Editor创建器初始化");
+                }
+                else
+                {
+                    Debug.LogError("未找到CreateUIUpdater方法");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("未找到UIUpdaterCreator类型，尝试使用反射工厂");
+                // 回退到反射工厂
+                uiUpdater = UIUpdaterFactory.CreateUIUpdater(this);
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Editor创建器失败: {e.Message}");
+            Debug.LogWarning("回退到反射工厂");
+            // 回退到反射工厂
+            uiUpdater = UIUpdaterFactory.CreateUIUpdater(this);
+        }
+        
+        if (uiUpdater != null)
+        {
+            Debug.Log("UI更新器初始化成功");
+        }
+        else
+        {
+            Debug.LogWarning("UI更新器初始化失败，实时更新功能将不可用");
+        }
+    }
+    #endif
     
     void SetupEventListeners()
     {
@@ -70,6 +135,7 @@ public class LevelEditorUI : MonoBehaviour
         if (addShapeButton) addShapeButton.onClick.AddListener(AddShape);
         if (addBallButton) addBallButton.onClick.AddListener(AddBall);
         if (backgroundButton) backgroundButton.onClick.AddListener(SwitchBackground);
+        if (previewButton) previewButton.onClick.AddListener(ShowConfigPreview);
         if (exportButton) exportButton.onClick.AddListener(ExportLevel);
         
         SetupPropertyListeners();
@@ -85,6 +151,9 @@ public class LevelEditorUI : MonoBehaviour
     
     void InitializeDefaultData()
     {
+        // 加载配置
+        LoadConfiguration();
+        
         // 如果没有初始化数据，创建默认数据
         if (currentLevel == null)
         {
@@ -101,6 +170,41 @@ public class LevelEditorUI : MonoBehaviour
         {
             // 如果层级列表不为空但当前层级为null，选择第一个层级
             currentLayer = currentLevel.layers[0];
+        }
+    }
+    
+    /// <summary>
+    /// 加载配置
+    /// </summary>
+    void LoadConfiguration()
+    {
+        try
+        {
+            var config = LevelEditorConfig.Instance;
+            if (config != null)
+            {
+                // 尝试从文件加载配置
+                config.LoadConfigFromFile();
+                Debug.Log("配置已加载");
+                
+                // 如果配置为空，初始化默认配置
+                if (config.shapeTypes.Count == 0 && config.ballTypes.Count == 0)
+                {
+                    Debug.Log("配置为空，初始化默认配置");
+                    config.InitializeDefaultConfig();
+                }
+                
+                Debug.Log($"配置加载完成 - 形状: {config.shapeTypes.Count}, 球: {config.ballTypes.Count}, 背景: {config.backgroundConfigs.Count}");
+            }
+            else
+            {
+                Debug.LogError("无法获取LevelEditorConfig实例");
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"配置加载失败: {e.Message}");
+            Debug.LogError($"错误详情: {e.StackTrace}");
         }
     }
     
@@ -196,7 +300,22 @@ public class LevelEditorUI : MonoBehaviour
             }
         }
     }
-
+    
+    /// <summary>
+    /// 显示配置预览
+    /// </summary>
+    public void ShowConfigPreview()
+    {
+        if (configPreviewUI != null)
+        {
+            configPreviewUI.ShowPreview();
+        }
+        else
+        {
+            Debug.LogWarning("ConfigPreviewUI组件未设置");
+        }
+    }
+    
     /// <summary>
     /// 清空编辑区、层级列表和选中状态
     /// </summary>
@@ -262,5 +381,17 @@ public class LevelEditorUI : MonoBehaviour
                 editAreaBackground.color = backgroundConfig.backgroundColor;
             }
         }
+    }
+    
+    void OnDestroy()
+    {
+        #if UNITY_EDITOR
+        // 清理UI更新器
+        if (uiUpdater != null)
+        {
+            uiUpdater.UnsubscribeFromConfigEvents();
+            Debug.Log("UI更新器已清理");
+        }
+        #endif
     }
 } 

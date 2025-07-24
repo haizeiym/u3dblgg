@@ -1,5 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 /// <summary>
 /// 关卡编辑器数据管理器
@@ -81,13 +84,32 @@ public class LevelEditorDataManager
         if (editorUI.currentLayer != null && editorUI.currentLayer.isActive)
         {
             string[] types = LevelEditorConfig.Instance.GetShapeTypeNames();
+            
+            // 检查是否有配置的形状类型
+            if (types.Length == 0)
+            {
+                Debug.LogWarning("没有配置的形状类型！请先配置形状类型。");
+                ShowConfigWarning("形状类型", "请打开 Tools/Level Editor/配置编辑器 添加形状类型");
+                return;
+            }
+            
             if (editorUI.currentShapeTypeIndex >= 0 && editorUI.currentShapeTypeIndex < types.Length)
             {
                 string shapeType = types[editorUI.currentShapeTypeIndex];
+                
+                // 验证配置中的形状类型
+                ShapeType shapeConfig = LevelEditorConfig.Instance.GetShapeConfig(shapeType);
+                if (shapeConfig == null)
+                {
+                    Debug.LogWarning($"配置中未找到形状类型: {shapeType}");
+                    return;
+                }
+                
                 ShapeData newShape = new ShapeData(shapeType, Vector2.zero, 0f);
                 editorUI.currentLayer.shapes.Add(newShape);
                 
                 Debug.Log($"形状已添加到层级 {editorUI.currentLayer.layerName}，当前形状数量: {editorUI.currentLayer.shapes.Count}");
+                Debug.Log($"使用配置形状: {shapeType} (配置名称: {shapeConfig.name})");
                 
                 // 立即验证数据
                 Debug.Log($"=== 添加形状后验证 ===");
@@ -104,7 +126,7 @@ public class LevelEditorDataManager
                     if (controller != null)
                     {
                         editorUI.SelectShape(controller);
-                        Debug.Log($"成功创建形状: {shapeType}");
+                        Debug.Log($"成功创建形状: {shapeType}，使用配置设置");
                     }
                 }
             }
@@ -133,8 +155,35 @@ public class LevelEditorDataManager
             ShapeData shapeData = editorUI.selectedShape.GetShapeData();
             if (shapeData != null)
             {
-                BallData newBall = new BallData("红球", Vector2.zero);
+                string[] ballTypes = LevelEditorConfig.Instance.GetBallTypeNames();
+                
+                // 检查是否有配置的球类型
+                if (ballTypes.Length == 0)
+                {
+                    Debug.LogWarning("没有配置的球类型！请先配置球类型。");
+                    ShowConfigWarning("球类型", "请打开 Tools/Level Editor/配置编辑器 添加球类型");
+                    return;
+                }
+                
+                // 使用当前选中的球类型索引
+                string ballType = "红球"; // 默认值
+                if (editorUI.currentBallTypeIndex >= 0 && editorUI.currentBallTypeIndex < ballTypes.Length)
+                {
+                    ballType = ballTypes[editorUI.currentBallTypeIndex];
+                }
+                
+                // 验证配置中的球类型
+                BallType ballConfig = LevelEditorConfig.Instance.GetBallConfig(ballType);
+                if (ballConfig == null)
+                {
+                    Debug.LogWarning($"配置中未找到球类型: {ballType}");
+                    return;
+                }
+                
+                BallData newBall = new BallData(ballType, Vector2.zero);
                 shapeData.balls.Add(newBall);
+                
+                Debug.Log($"使用配置球类型: {ballType} (配置名称: {ballConfig.name}, 颜色: {ballConfig.color})");
                 
                 // 将球创建在选中的形状内部
                 GameObject ballObj = uiManager.CreateBallObject(newBall);
@@ -143,7 +192,7 @@ public class LevelEditorDataManager
                     // 将球设置为形状的子对象
                     ballObj.transform.SetParent(editorUI.selectedShape.transform, false);
                     
-                    Debug.Log($"成功添加球到形状: {shapeData.shapeType}");
+                    Debug.Log($"成功添加球到形状: {shapeData.shapeType}，球类型: {ballType}，使用配置设置");
                 }
                 else
                 {
@@ -163,6 +212,34 @@ public class LevelEditorDataManager
         {
             Debug.LogWarning("当前没有可用的层级");
         }
+    }
+    
+    /// <summary>
+    /// 显示配置警告
+    /// </summary>
+    void ShowConfigWarning(string configType, string message)
+    {
+        Debug.LogWarning($"[{configType}] {message}");
+        
+        // 在编辑器中显示对话框
+        #if UNITY_EDITOR
+        EditorUtility.DisplayDialog(
+            $"{configType}配置缺失", 
+            $"{message}\n\n点击确定打开配置编辑器", 
+            "确定"
+        );
+        
+        // 使用反射打开配置编辑器
+        var configWindowType = System.Type.GetType("LevelEditorConfigWindow, Assembly-CSharp-Editor");
+        if (configWindowType != null)
+        {
+            EditorWindow.GetWindow(configWindowType, false, "关卡编辑器配置");
+        }
+        else
+        {
+            Debug.LogError("无法找到 LevelEditorConfigWindow 类型");
+        }
+        #endif
     }
     
     public void ExportLevel()

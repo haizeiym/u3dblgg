@@ -96,6 +96,9 @@ public class LevelEditorMenu
     
     static void InitializeDefaultLevelData(LevelEditorUI levelEditor)
     {
+        // 确保配置已加载
+        LoadConfiguration();
+        
         // 确保数据已初始化
         if (levelEditor.currentLevel == null)
         {
@@ -116,5 +119,40 @@ public class LevelEditorMenu
         
         // 刷新UI
         levelEditor.RefreshUI();
+    }
+    
+    /// <summary>
+    /// 加载配置
+    /// </summary>
+    static void LoadConfiguration()
+    {
+        try
+        {
+            var config = LevelEditorConfig.Instance;
+            if (config != null)
+            {
+                // 尝试从文件加载配置
+                config.LoadConfigFromFile();
+                Debug.Log("一键配置：配置已加载");
+                
+                // 如果配置为空，初始化默认配置
+                if (config.shapeTypes.Count == 0 && config.ballTypes.Count == 0)
+                {
+                    Debug.Log("一键配置：配置为空，初始化默认配置");
+                    config.InitializeDefaultConfig();
+                }
+                
+                Debug.Log($"一键配置：配置加载完成 - 形状: {config.shapeTypes.Count}, 球: {config.ballTypes.Count}, 背景: {config.backgroundConfigs.Count}");
+            }
+            else
+            {
+                Debug.LogError("一键配置：无法获取LevelEditorConfig实例");
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"一键配置：配置加载失败: {e.Message}");
+            Debug.LogError($"错误详情: {e.StackTrace}");
+        }
     }
 } 

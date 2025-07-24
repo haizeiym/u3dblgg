@@ -174,7 +174,7 @@ public class LevelEditorUIBuilder
     /// <summary>
     /// 创建形状类型按钮列表（使用Unity自带简单按钮）
     /// </summary>
-    void CreateShapeTypeButtons(GameObject parent, Vector2 position)
+    public void CreateShapeTypeButtons(GameObject parent, Vector2 position)
     {
         // 创建标签
         GameObject labelObj = new GameObject("TypeLabel");
@@ -223,6 +223,9 @@ public class LevelEditorUIBuilder
     {
         Debug.Log($"点击形状类型按钮: {shapeType} (索引: {index})");
         
+        // 更新当前形状类型索引（用于新建形状时使用）
+        levelEditor.currentShapeTypeIndex = index;
+        
         // 检查是否有选中的形状
         if (levelEditor.selectedShape == null)
         {
@@ -260,6 +263,9 @@ public class LevelEditorUIBuilder
     {
         Debug.Log($"点击球类型按钮: {ballType} (索引: {index})");
         
+        // 更新当前球类型索引（用于新建球时使用）
+        levelEditor.currentBallTypeIndex = index;
+        
         // 检查是否有选中的球
         if (levelEditor.selectedBall == null)
         {
@@ -290,7 +296,7 @@ public class LevelEditorUIBuilder
         Debug.Log($"球类型已更新为: {ballType}");
     }
     
-    void CreateBallTypeButtons(GameObject parent, Vector2 position)
+    public void CreateBallTypeButtons(GameObject parent, Vector2 position)
     {
         Debug.Log("开始创建球类型按钮...");
         
@@ -330,11 +336,6 @@ public class LevelEditorUIBuilder
             button.onClick.AddListener(() => {
                 Debug.Log($"球类型按钮 {ballTypes[index]} 被点击！");
                 OnBallTypeButtonClicked(index, ballTypes[index]);
-            });
-            
-            // 添加一个简单的测试监听器
-            button.onClick.AddListener(() => {
-                Debug.Log($"测试：球类型按钮 {ballTypes[index]} 的简单点击事件被触发");
             });
             
             levelEditor.ballTypeButtons[i] = button;
