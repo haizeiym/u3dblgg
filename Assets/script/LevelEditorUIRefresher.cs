@@ -362,22 +362,58 @@ public class LevelEditorUIRefresher
     
     public GameObject CreateShapeObject(ShapeData shapeData)
     {
-        if (editorUI.shapePrefab && editorUI.editAreaContent)
+        try
         {
-            GameObject shapeObj = Object.Instantiate(editorUI.shapePrefab, editorUI.editAreaContent);
-            ShapeController controller = shapeObj.GetComponent<ShapeController>();
-            if (controller)
+            if (editorUI.shapePrefab == null)
             {
-                controller.Initialize(shapeData, editorUI);
+                Debug.LogError("shapePrefab为空，无法创建形状对象");
+                return null;
             }
+            
+            if (editorUI.editAreaContent == null)
+            {
+                Debug.LogError("editAreaContent为空，无法创建形状对象");
+                return null;
+            }
+            
+            if (shapeData == null)
+            {
+                Debug.LogError("shapeData为空，无法创建形状对象");
+                return null;
+            }
+            
+            Debug.Log($"开始创建形状对象: {shapeData.shapeType}");
+            
+            GameObject shapeObj = Object.Instantiate(editorUI.shapePrefab, editorUI.editAreaContent);
+            if (shapeObj == null)
+            {
+                Debug.LogError("Instantiate返回null，创建形状对象失败");
+                return null;
+            }
+            
+            ShapeController controller = shapeObj.GetComponent<ShapeController>();
+            if (controller == null)
+            {
+                Debug.LogError("新创建的形状对象没有ShapeController组件");
+                Object.DestroyImmediate(shapeObj);
+                return null;
+            }
+            
+            controller.Initialize(shapeData, editorUI);
             
             // 确保新创建的对象在UI层级的最前面（最上层）
             shapeObj.transform.SetAsLastSibling();
             
             shapeObjects.Add(shapeObj);
+            Debug.Log($"形状对象创建成功: {shapeData.shapeType}");
             return shapeObj;
         }
-        return null;
+        catch (System.Exception e)
+        {
+            Debug.LogError($"CreateShapeObject异常: {e.Message}");
+            Debug.LogError($"异常堆栈: {e.StackTrace}");
+            return null;
+        }
     }
     
     public GameObject CreateBallObject(BallData ballData, GameObject parentShape = null)

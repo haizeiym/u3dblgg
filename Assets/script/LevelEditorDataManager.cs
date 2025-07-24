@@ -76,110 +76,168 @@ public class LevelEditorDataManager
     
     public void AddShape()
     {
-        // 强制加载最新配置
-        LevelEditorConfig.Instance.LoadConfigFromFile();
-        
         Debug.Log($"开始添加形状，当前层级: {editorUI.currentLayer?.layerName}");
         
-        if (editorUI.currentLayer != null && editorUI.currentLayer.isActive)
+        // 检查层级状态
+        if (editorUI.currentLayer == null)
         {
-            string[] types = LevelEditorConfig.Instance.GetShapeTypeNames();
+            Debug.LogWarning("当前没有可用的层级");
+            return;
+        }
+        
+        if (!editorUI.currentLayer.isActive)
+        {
+            Debug.LogWarning("无法添加图形：当前层级未激活，请先激活该层级");
+            return;
+        }
+        
+        // 检查形状类型配置（不强制重新加载，避免循环）
+        var config = LevelEditorConfig.Instance;
+        if (config == null)
+        {
+            Debug.LogError("配置实例为空");
+            return;
+        }
+        
+        string[] types = config.GetShapeTypeNames();
+        if (types.Length == 0)
+        {
+            Debug.LogWarning("没有配置的形状类型！请先配置形状类型。");
+            // 不显示对话框，避免UI卡死
+            Debug.LogError("请打开 Tools/Level Editor/配置编辑器 添加形状类型");
+            return;
+        }
+        
+        // 检查形状类型索引
+        if (editorUI.currentShapeTypeIndex < 0 || editorUI.currentShapeTypeIndex >= types.Length)
+        {
+            Debug.LogWarning($"形状类型索引超出范围: {editorUI.currentShapeTypeIndex}，重置为0");
+            editorUI.currentShapeTypeIndex = 0;
+        }
+        
+        string shapeType = types[editorUI.currentShapeTypeIndex];
+        
+        // 验证配置中的形状类型
+        ShapeType shapeConfig = LevelEditorConfig.Instance.GetShapeConfig(shapeType);
+        if (shapeConfig == null)
+        {
+            Debug.LogWarning($"配置中未找到形状类型: {shapeType}");
+            return;
+        }
+        
+        try
+        {
+            ShapeData newShape = new ShapeData(shapeType, Vector2.zero, 0f);
+            editorUI.currentLayer.shapes.Add(newShape);
             
-            // 检查是否有配置的形状类型
-            if (types.Length == 0)
+            Debug.Log($"形状已添加到层级 {editorUI.currentLayer.layerName}，当前形状数量: {editorUI.currentLayer.shapes.Count}");
+            Debug.Log($"使用配置形状: {shapeType} (配置名称: {shapeConfig.name})");
+            
+            // 立即验证数据
+            Debug.Log($"=== 添加形状后验证 ===");
+            Debug.Log($"当前层级形状数量: {editorUI.currentLayer.shapes.Count}");
+            Debug.Log($"最新添加的形状: {editorUI.currentLayer.shapes[editorUI.currentLayer.shapes.Count - 1].shapeType}");
+            Debug.Log($"=== 验证结束 ===");
+            
+            // 检查uiManager
+            if (uiManager == null)
             {
-                Debug.LogWarning("没有配置的形状类型！请先配置形状类型。");
-                ShowConfigWarning("形状类型", "请打开 Tools/Level Editor/配置编辑器 添加形状类型");
+                Debug.LogError("uiManager为空，无法创建形状对象");
                 return;
             }
             
-            if (editorUI.currentShapeTypeIndex >= 0 && editorUI.currentShapeTypeIndex < types.Length)
+            // 检查必要的组件
+            if (editorUI.shapePrefab == null)
             {
-                string shapeType = types[editorUI.currentShapeTypeIndex];
-                
-                // 验证配置中的形状类型
-                ShapeType shapeConfig = LevelEditorConfig.Instance.GetShapeConfig(shapeType);
-                if (shapeConfig == null)
+                Debug.LogError("shapePrefab为空，无法创建形状对象");
+                return;
+            }
+            
+            if (editorUI.editAreaContent == null)
+            {
+                Debug.LogError("editAreaContent为空，无法创建形状对象");
+                return;
+            }
+            
+            GameObject newShapeObj = uiManager.CreateShapeObject(newShape);
+            
+            // 自动选中新创建的形状
+            if (newShapeObj != null)
+            {
+                ShapeController controller = newShapeObj.GetComponent<ShapeController>();
+                if (controller != null)
                 {
-                    Debug.LogWarning($"配置中未找到形状类型: {shapeType}");
-                    return;
-                }
-                
-                ShapeData newShape = new ShapeData(shapeType, Vector2.zero, 0f);
-                editorUI.currentLayer.shapes.Add(newShape);
-                
-                Debug.Log($"形状已添加到层级 {editorUI.currentLayer.layerName}，当前形状数量: {editorUI.currentLayer.shapes.Count}");
-                Debug.Log($"使用配置形状: {shapeType} (配置名称: {shapeConfig.name})");
-                
-                // 立即验证数据
-                Debug.Log($"=== 添加形状后验证 ===");
-                Debug.Log($"当前层级形状数量: {editorUI.currentLayer.shapes.Count}");
-                Debug.Log($"最新添加的形状: {editorUI.currentLayer.shapes[editorUI.currentLayer.shapes.Count - 1].shapeType}");
-                Debug.Log($"=== 验证结束 ===");
-                
-                GameObject newShapeObj = uiManager.CreateShapeObject(newShape);
-                
-                // 自动选中新创建的形状
-                if (newShapeObj != null)
-                {
-                    ShapeController controller = newShapeObj.GetComponent<ShapeController>();
-                    if (controller != null)
-                    {
-                        editorUI.SelectShape(controller);
-                        Debug.Log($"成功创建形状: {shapeType}，使用配置设置");
-                    }
+                    editorUI.SelectShape(controller);
+                    Debug.Log($"成功创建形状: {shapeType}，使用配置设置");
                 }
             }
             else
             {
-                Debug.LogWarning($"形状类型索引超出范围: {editorUI.currentShapeTypeIndex}");
+                Debug.LogError("创建形状对象失败");
             }
         }
-        else if (editorUI.currentLayer != null && !editorUI.currentLayer.isActive)
+        catch (System.Exception e)
         {
-            Debug.LogWarning("无法添加图形：当前层级未激活，请先激活该层级");
-        }
-        else
-        {
-            Debug.LogWarning("当前没有可用的层级");
+            Debug.LogError($"添加形状时发生错误: {e.Message}");
+            Debug.LogError($"错误详情: {e.StackTrace}");
         }
     }
     
     public void AddBall()
     {
-        // 强制加载最新配置
-        LevelEditorConfig.Instance.LoadConfigFromFile();
+        Debug.Log($"开始添加球，当前层级: {editorUI.currentLayer?.layerName}, 选中形状: {editorUI.selectedShape?.name}");
         
-        if (editorUI.selectedShape != null && editorUI.currentLayer != null && editorUI.currentLayer.isActive)
+        // 检查层级状态
+        if (editorUI.currentLayer == null)
+        {
+            Debug.LogWarning("当前没有可用的层级");
+            return;
+        }
+        
+        if (!editorUI.currentLayer.isActive)
+        {
+            Debug.LogWarning("无法添加球：当前层级未激活，请先激活该层级");
+            return;
+        }
+        
+        // 检查球类型配置（不强制重新加载，避免循环）
+        var config = LevelEditorConfig.Instance;
+        if (config == null)
+        {
+            Debug.LogError("配置实例为空");
+            return;
+        }
+        
+        string[] ballTypes = config.GetBallTypeNames();
+        if (ballTypes.Length == 0)
+        {
+            Debug.LogWarning("没有配置的球类型！请先配置球类型。");
+            // 不显示对话框，避免UI卡死
+            Debug.LogError("请打开 Tools/Level Editor/配置编辑器 添加球类型");
+            return;
+        }
+        
+        // 使用当前选中的球类型索引
+        string ballType = "红球"; // 默认值
+        if (editorUI.currentBallTypeIndex >= 0 && editorUI.currentBallTypeIndex < ballTypes.Length)
+        {
+            ballType = ballTypes[editorUI.currentBallTypeIndex];
+        }
+        
+        // 验证配置中的球类型
+        BallType ballConfig = LevelEditorConfig.Instance.GetBallConfig(ballType);
+        if (ballConfig == null)
+        {
+            Debug.LogWarning($"配置中未找到球类型: {ballType}");
+            return;
+        }
+        
+        // 如果有选中的形状，将球添加到形状中
+        if (editorUI.selectedShape != null)
         {
             ShapeData shapeData = editorUI.selectedShape.GetShapeData();
             if (shapeData != null)
             {
-                string[] ballTypes = LevelEditorConfig.Instance.GetBallTypeNames();
-                
-                // 检查是否有配置的球类型
-                if (ballTypes.Length == 0)
-                {
-                    Debug.LogWarning("没有配置的球类型！请先配置球类型。");
-                    ShowConfigWarning("球类型", "请打开 Tools/Level Editor/配置编辑器 添加球类型");
-                    return;
-                }
-                
-                // 使用当前选中的球类型索引
-                string ballType = "红球"; // 默认值
-                if (editorUI.currentBallTypeIndex >= 0 && editorUI.currentBallTypeIndex < ballTypes.Length)
-                {
-                    ballType = ballTypes[editorUI.currentBallTypeIndex];
-                }
-                
-                // 验证配置中的球类型
-                BallType ballConfig = LevelEditorConfig.Instance.GetBallConfig(ballType);
-                if (ballConfig == null)
-                {
-                    Debug.LogWarning($"配置中未找到球类型: {ballType}");
-                    return;
-                }
-                
                 BallData newBall = new BallData(ballType, Vector2.zero);
                 shapeData.balls.Add(newBall);
                 
@@ -200,17 +258,32 @@ public class LevelEditorDataManager
                 }
             }
         }
-        else if (editorUI.selectedShape != null && editorUI.currentLayer != null && !editorUI.currentLayer.isActive)
-        {
-            Debug.LogWarning("无法添加球：当前层级未激活，请先激活该层级");
-        }
-        else if (editorUI.selectedShape == null)
-        {
-            Debug.LogWarning("请先选择一个形状，然后点击添加球");
-        }
         else
         {
-            Debug.LogWarning("当前没有可用的层级");
+            // 如果没有选中的形状，创建一个独立的球（添加到当前层级的默认位置）
+            Debug.Log("没有选中形状，创建独立球");
+            
+            // 创建一个临时的形状数据来容纳球
+            ShapeData tempShapeData = new ShapeData("临时形状", Vector2.zero, 0f);
+            BallData newBall = new BallData(ballType, Vector2.zero);
+            tempShapeData.balls.Add(newBall);
+            
+            // 将临时形状添加到当前层级
+            editorUI.currentLayer.shapes.Add(tempShapeData);
+            
+            // 创建球对象
+            GameObject ballObj = uiManager.CreateBallObject(newBall);
+            if (ballObj != null)
+            {
+                // 将球添加到编辑区
+                ballObj.transform.SetParent(editorUI.editAreaContent, false);
+                
+                Debug.Log($"成功创建独立球，球类型: {ballType}，使用配置设置");
+            }
+            else
+            {
+                Debug.LogError("创建球对象失败");
+            }
         }
     }
     
@@ -272,8 +345,9 @@ public class LevelEditorDataManager
             Debug.Log($"添加层级到导出数据: {layer.layerName}, 导出形状数量: {newLayer.shapes.Count}");
         }
         
-        string json = LevelDataExporter.SaveToJson(exportData);
-        Debug.Log("导出的JSON数据：\n" + json);
+        // 使用递增ID格式导出
+        string json = LevelDataExporter.SaveToJsonWithIncrementalIds(exportData);
+        Debug.Log("导出的JSON数据（递增ID格式）：\n" + json);
         
         // 确保SavedLevels目录存在
         string savedLevelsPath = Application.dataPath + "/SavedLevels";
@@ -336,7 +410,8 @@ public class LevelEditorDataManager
         
         try
         {
-            LevelData importedLevel = LevelDataExporter.LoadFromJson(jsonContent);
+            // 尝试使用递增ID格式导入
+            LevelData importedLevel = LevelDataExporter.LoadFromJsonWithIncrementalIds(jsonContent);
             if (importedLevel != null)
             {
                 editorUI.currentLevel = importedLevel;
@@ -353,7 +428,30 @@ public class LevelEditorDataManager
                 }
                 
                 editorUI.RefreshUI();
-                Debug.Log($"成功导入关卡: {System.IO.Path.GetFileName(latestFile)}");
+                Debug.Log($"成功导入关卡（递增ID格式）: {System.IO.Path.GetFileName(latestFile)}");
+            }
+            else
+            {
+                // 如果递增ID格式导入失败，尝试使用原始格式
+                Debug.Log("递增ID格式导入失败，尝试使用原始格式导入");
+                importedLevel = LevelDataExporter.LoadFromJson(jsonContent);
+                if (importedLevel != null)
+                {
+                    editorUI.currentLevel = importedLevel;
+                    currentLevelFilePath = latestFile;
+                    if (importedLevel.layers.Count > 0)
+                    {
+                        editorUI.currentLayer = importedLevel.layers[0];
+                    }
+                    else
+                    {
+                        editorUI.currentLayer = new LayerData("默认层级");
+                        editorUI.currentLevel.layers.Add(editorUI.currentLayer);
+                    }
+                    
+                    editorUI.RefreshUI();
+                    Debug.Log($"成功导入关卡（原始格式）: {System.IO.Path.GetFileName(latestFile)}");
+                }
             }
         }
         catch (System.Exception e)

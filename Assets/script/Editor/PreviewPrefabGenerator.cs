@@ -358,7 +358,7 @@ public class PreviewPrefabGenerator : EditorWindow
         Text buttonText = textObj.AddComponent<Text>();
         buttonText.text = text;
         buttonText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-        buttonText.fontSize = 12;
+        buttonText.fontSize = 20;
         buttonText.color = Color.white;
         buttonText.alignment = TextAnchor.MiddleCenter;
 

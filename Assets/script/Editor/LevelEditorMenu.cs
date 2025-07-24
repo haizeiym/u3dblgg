@@ -28,15 +28,20 @@ public class LevelEditorMenu
             levelEditor = editorUI.AddComponent<LevelEditorUI>();
         }
         
-        // 5. 创建UI结构
+        // 5. 确保配置已加载（在UI构建之前）
+        LoadConfiguration();
+        
+        // 6. 创建UI结构
         LevelEditorUIBuilder builder = new LevelEditorUIBuilder(levelEditor);
         builder.CreateUIStructure();
         
-        // 6. 延迟初始化默认LevelData，确保Awake()先执行
+        // 7. 延迟初始化默认LevelData，确保Awake()先执行
         EditorApplication.delayCall += () => {
             InitializeDefaultLevelData(levelEditor);
+            
+            // 注意：事件绑定将在运行时自动调用
             Selection.activeGameObject = editorUI;
-            Debug.Log("关卡编辑器配置完成！");
+            Debug.Log("关卡编辑器配置完成！事件绑定将在运行时自动执行。");
         };
     }
     

@@ -313,67 +313,189 @@ public class LevelEditorPreviewWindow : EditorWindow
         EditorGUILayout.EndVertical();
     }
 
-    // 绘制辅助方法
+    // 绘制辅助方法 - 使用GUI而不是Handles
     void DrawCircle(float centerX, float centerY, float radius, Color color)
     {
-        int segments = 32;
-        Vector3[] points = new Vector3[segments];
+        // 在EditorWindow中使用简单的圆形纹理绘制
+        float size = radius * 2;
+        Rect rect = new Rect(centerX - radius, centerY - radius, size, size);
         
-        for (int i = 0; i < segments; i++)
+        // 创建圆形纹理
+        Texture2D circleTexture = CreateCircleTexture((int)size, color);
+        GUI.DrawTexture(rect, circleTexture);
+        
+        // 清理纹理
+        if (Application.isEditor)
         {
-            float angle = i * 2f * Mathf.PI / segments;
-            points[i] = new Vector3(centerX + radius * Mathf.Cos(angle), centerY + radius * Mathf.Sin(angle), 0);
+            DestroyImmediate(circleTexture);
         }
-
-        Handles.color = color;
-        Handles.DrawPolyLine(points);
-        Handles.DrawLine(points[segments - 1], points[0]);
+        else
+        {
+            Destroy(circleTexture);
+        }
     }
 
     void DrawRect(float centerX, float centerY, float width, float height, Color color)
     {
-        float left = centerX - width * 0.5f;
-        float top = centerY - height * 0.5f;
-        
-        Vector3[] points = new Vector3[]
-        {
-            new Vector3(left, top, 0),
-            new Vector3(left + width, top, 0),
-            new Vector3(left + width, top + height, 0),
-            new Vector3(left, top + height, 0)
-        };
-
-        Handles.color = color;
-        Handles.DrawPolyLine(points);
-        Handles.DrawLine(points[3], points[0]);
+        // 在EditorWindow中使用矩形绘制
+        Rect rect = new Rect(centerX - width * 0.5f, centerY - height * 0.5f, width, height);
+        EditorGUI.DrawRect(rect, color);
     }
 
     void DrawTriangle(float centerX, float centerY, float size, Color color)
     {
-        Vector3[] points = new Vector3[]
+        // 在EditorWindow中使用简单的三角形纹理绘制
+        Rect rect = new Rect(centerX - size * 0.5f, centerY - size * 0.5f, size, size);
+        
+        // 创建三角形纹理
+        Texture2D triangleTexture = CreateTriangleTexture((int)size, color);
+        GUI.DrawTexture(rect, triangleTexture);
+        
+        // 清理纹理
+        if (Application.isEditor)
         {
-            new Vector3(centerX, centerY + size * 0.5f, 0),
-            new Vector3(centerX - size * 0.5f, centerY - size * 0.5f, 0),
-            new Vector3(centerX + size * 0.5f, centerY - size * 0.5f, 0)
-        };
-
-        Handles.color = color;
-        Handles.DrawPolyLine(points);
-        Handles.DrawLine(points[2], points[0]);
+            DestroyImmediate(triangleTexture);
+        }
+        else
+        {
+            Destroy(triangleTexture);
+        }
     }
 
     void DrawDiamond(float centerX, float centerY, float size, Color color)
     {
-        Vector3[] points = new Vector3[]
+        // 在EditorWindow中使用简单的菱形纹理绘制
+        Rect rect = new Rect(centerX - size * 0.5f, centerY - size * 0.5f, size, size);
+        
+        // 创建菱形纹理
+        Texture2D diamondTexture = CreateDiamondTexture((int)size, color);
+        GUI.DrawTexture(rect, diamondTexture);
+        
+        // 清理纹理
+        if (Application.isEditor)
         {
-            new Vector3(centerX, centerY + size * 0.5f, 0),
-            new Vector3(centerX + size * 0.5f, centerY, 0),
-            new Vector3(centerX, centerY - size * 0.5f, 0),
-            new Vector3(centerX - size * 0.5f, centerY, 0)
-        };
-
-        Handles.color = color;
-        Handles.DrawPolyLine(points);
-        Handles.DrawLine(points[3], points[0]);
+            DestroyImmediate(diamondTexture);
+        }
+        else
+        {
+            Destroy(diamondTexture);
+        }
+    }
+    
+    // 创建圆形纹理
+    Texture2D CreateCircleTexture(int size, Color color)
+    {
+        Texture2D texture = new Texture2D(size, size);
+        Color[] pixels = new Color[size * size];
+        
+        Vector2 center = new Vector2(size * 0.5f, size * 0.5f);
+        float radius = size * 0.5f;
+        
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float distance = Vector2.Distance(new Vector2(x, y), center);
+                pixels[y * size + x] = distance <= radius ? color : Color.clear;
+            }
+        }
+        
+        texture.SetPixels(pixels);
+        texture.Apply();
+        return texture;
+    }
+    
+    // 创建三角形纹理
+    Texture2D CreateTriangleTexture(int size, Color color)
+    {
+        Texture2D texture = new Texture2D(size, size);
+        Color[] pixels = new Color[size * size];
+        
+        Vector2 center = new Vector2(size * 0.5f, size * 0.5f);
+        float halfSize = size * 0.5f;
+        
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                Vector2 point = new Vector2(x, y);
+                if (IsPointInTriangle(point, center, halfSize))
+                {
+                    pixels[y * size + x] = color;
+                }
+                else
+                {
+                    pixels[y * size + x] = Color.clear;
+                }
+            }
+        }
+        
+        texture.SetPixels(pixels);
+        texture.Apply();
+        return texture;
+    }
+    
+    // 创建菱形纹理
+    Texture2D CreateDiamondTexture(int size, Color color)
+    {
+        Texture2D texture = new Texture2D(size, size);
+        Color[] pixels = new Color[size * size];
+        
+        Vector2 center = new Vector2(size * 0.5f, size * 0.5f);
+        float halfSize = size * 0.5f;
+        
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                Vector2 point = new Vector2(x, y);
+                if (IsPointInDiamond(point, center, halfSize))
+                {
+                    pixels[y * size + x] = color;
+                }
+                else
+                {
+                    pixels[y * size + x] = Color.clear;
+                }
+            }
+        }
+        
+        texture.SetPixels(pixels);
+        texture.Apply();
+        return texture;
+    }
+    
+    // 判断点是否在三角形内
+    bool IsPointInTriangle(Vector2 point, Vector2 center, float size)
+    {
+        Vector2 p1 = center + new Vector2(0, size * 0.5f);
+        Vector2 p2 = center + new Vector2(-size * 0.5f, -size * 0.5f);
+        Vector2 p3 = center + new Vector2(size * 0.5f, -size * 0.5f);
+        
+        return IsPointInTriangle(point, p1, p2, p3);
+    }
+    
+    bool IsPointInTriangle(Vector2 point, Vector2 p1, Vector2 p2, Vector2 p3)
+    {
+        float d1 = Sign(point, p1, p2);
+        float d2 = Sign(point, p2, p3);
+        float d3 = Sign(point, p3, p1);
+        
+        bool hasNeg = (d1 < 0) || (d2 < 0) || (d3 < 0);
+        bool hasPos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+        
+        return !(hasNeg && hasPos);
+    }
+    
+    float Sign(Vector2 p1, Vector2 p2, Vector2 p3)
+    {
+        return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
+    }
+    
+    // 判断点是否在菱形内
+    bool IsPointInDiamond(Vector2 point, Vector2 center, float size)
+    {
+        Vector2 diff = point - center;
+        return Mathf.Abs(diff.x) + Mathf.Abs(diff.y) <= size;
     }
 } 

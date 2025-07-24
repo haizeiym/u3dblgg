@@ -17,6 +17,7 @@ public class UIComponentBuilder
         buttonRect.anchorMax = new Vector2(position.x + 0.15f, position.y + 0.05f);
         buttonRect.offsetMin = Vector2.zero;
         buttonRect.offsetMax = Vector2.zero;
+        buttonRect.sizeDelta = new Vector2(50, 100);
         
         Image buttonBg = button.AddComponent<Image>();
         buttonBg.color = new Color(0.4f, 0.4f, 0.4f, 1f);
@@ -27,6 +28,9 @@ public class UIComponentBuilder
         
         // 确保按钮有正确的交互设置
         buttonComponent.interactable = true;
+        
+        // 添加调试信息
+        Debug.Log($"创建按钮: {text}, 位置: {position}, Button组件: {buttonComponent != null}");
         
         GameObject textObj = new GameObject("Text");
         textObj.transform.SetParent(button.transform, false);
@@ -40,9 +44,19 @@ public class UIComponentBuilder
         Text textComponent = textObj.AddComponent<Text>();
         textComponent.text = text;
         textComponent.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-        textComponent.fontSize = 14;
+        textComponent.fontSize = 20;
         textComponent.color = Color.white;
         textComponent.alignment = TextAnchor.MiddleCenter;
+        
+        // 验证按钮组件
+        if (buttonComponent == null)
+        {
+            Debug.LogError($"按钮 {text} 的Button组件创建失败");
+        }
+        else
+        {
+            Debug.Log($"按钮 {text} 创建成功，Button组件: {buttonComponent.name}");
+        }
         
         return button;
     }
@@ -97,7 +111,8 @@ public class UIComponentBuilder
         
         Image sliderBg = slider.AddComponent<Image>();
         sliderBg.color = new Color(0.3f, 0.3f, 0.3f, 1f);
-        
+        sliderRect.sizeDelta = new Vector2(100, 30);
+
         Slider sliderComponent = slider.AddComponent<Slider>();
         sliderComponent.targetGraphic = sliderBg;
         
@@ -107,7 +122,7 @@ public class UIComponentBuilder
         RectTransform handleRect = handle.AddComponent<RectTransform>();
         handleRect.anchorMin = new Vector2(0.5f, 0.5f);
         handleRect.anchorMax = new Vector2(0.5f, 0.5f);
-        handleRect.sizeDelta = new Vector2(20, 20);
+        handleRect.sizeDelta = new Vector2(20, 10);
         
         Image handleBg = handle.AddComponent<Image>();
         handleBg.color = Color.white;

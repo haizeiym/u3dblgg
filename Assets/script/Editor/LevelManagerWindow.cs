@@ -53,7 +53,16 @@ public class LevelManagerWindow : EditorWindow
     void ImportLevelFromFile(string filePath)
     {
         string json = File.ReadAllText(filePath);
-        var level = LevelDataExporter.LoadFromJson(json);
+        
+        // 尝试使用递增ID格式导入
+        var level = LevelDataExporter.LoadFromJsonWithIncrementalIds(json);
+        if (level == null)
+        {
+            // 如果递增ID格式导入失败，尝试使用原始格式
+            Debug.Log("递增ID格式导入失败，尝试使用原始格式导入");
+            level = LevelDataExporter.LoadFromJson(json);
+        }
+        
         if (level != null)
         {
             var editorUI = GameObject.FindObjectOfType<LevelEditorUI>();

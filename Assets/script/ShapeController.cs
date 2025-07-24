@@ -41,7 +41,8 @@ public class ShapeController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         if (image != null)
         {
             image.color = new Color(0.8f, 0.8f, 0.8f, 0.8f);
-            image.sprite = ShapeSpriteGenerator.CreateCircleSprite();
+            // 不生成纹理，避免卡死
+            image.sprite = null;
         }
         
         if (rectTransform != null)
@@ -66,54 +67,99 @@ public class ShapeController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         
         Debug.Log($"更新形状外观: {shapeData.shapeType}");
         
-        // 从配置中获取形状配置
-        ShapeType config = LevelEditorConfig.Instance.GetShapeConfig(shapeData.shapeType);
-        if (config != null)
+        try
         {
-            if (config.sprite != null)
+            // 从配置中获取形状配置
+            ShapeType config = LevelEditorConfig.Instance.GetShapeConfig(shapeData.shapeType);
+            if (config != null)
             {
-                // 使用配置中的自定义图片
-                image.sprite = config.sprite;
-                // 设置图片大小为原始尺寸
-                if (config.sprite.rect.width > 0 && config.sprite.rect.height > 0)
+                if (config.sprite != null)
                 {
-                    image.rectTransform.sizeDelta = new Vector2(config.sprite.rect.width, config.sprite.rect.height);
+                    // 使用配置中的自定义图片
+                    image.sprite = config.sprite;
+                    // 设置图片大小为原始尺寸
+                    if (config.sprite.rect.width > 0 && config.sprite.rect.height > 0)
+                    {
+                        image.rectTransform.sizeDelta = new Vector2(config.sprite.rect.width, config.sprite.rect.height);
+                    }
+                    Debug.Log($"使用配置图片: {config.name}");
                 }
-                Debug.Log($"使用配置图片: {config.name}");
+                else
+                {
+                    // 使用默认生成的图片（添加异常处理）
+                    SetDefaultShapeSprite(shapeData.shapeType);
+                }
             }
             else
             {
-                // 使用默认生成的图片
-                switch (shapeData.shapeType)
-                {
-                    case "圆形":
-                        image.sprite = ShapeSpriteGenerator.CreateCircleSprite();
-                        Debug.Log("使用默认圆形精灵");
-                        break;
-                    case "矩形":
-                        image.sprite = ShapeSpriteGenerator.CreateRectangleSprite();
-                        Debug.Log("使用默认矩形精灵");
-                        break;
-                    case "三角形":
-                        image.sprite = ShapeSpriteGenerator.CreateTriangleSprite();
-                        Debug.Log("使用默认三角形精灵");
-                        break;
-                    case "菱形":
-                        image.sprite = ShapeSpriteGenerator.CreateDiamondSprite();
-                        Debug.Log("使用默认菱形精灵");
-                        break;
-                    default:
-                        Debug.LogWarning($"未知的形状类型: {shapeData.shapeType}，使用默认圆形");
-                        image.sprite = ShapeSpriteGenerator.CreateCircleSprite();
-                        break;
-                }
+                Debug.LogWarning($"未找到形状配置: {shapeData.shapeType}，使用默认圆形");
+                SetDefaultShapeSprite("圆形");
             }
         }
-        else
+        catch (System.Exception e)
         {
-            Debug.LogWarning($"未找到形状配置: {shapeData.shapeType}，使用默认圆形");
-            image.sprite = ShapeSpriteGenerator.CreateCircleSprite();
+            Debug.LogError($"UpdateShapeAppearance异常: {e.Message}");
+            // 发生异常时使用最简单的默认设置
+            SetSimpleDefaultAppearance();
         }
+    }
+    
+    /// <summary>
+    /// 设置默认形状精灵（带异常处理）
+    /// </summary>
+    void SetDefaultShapeSprite(string shapeType)
+    {
+        try
+        {
+            switch (shapeType)
+            {
+                case "圆形":
+                    image.sprite = ShapeSpriteGenerator.CreateCircleSprite();
+                    Debug.Log("使用默认圆形精灵");
+                    break;
+                case "矩形":
+                    image.sprite = ShapeSpriteGenerator.CreateRectangleSprite();
+                    Debug.Log("使用默认矩形精灵");
+                    break;
+                case "三角形":
+                    image.sprite = ShapeSpriteGenerator.CreateTriangleSprite();
+                    Debug.Log("使用默认三角形精灵");
+                    break;
+                case "菱形":
+                    image.sprite = ShapeSpriteGenerator.CreateDiamondSprite();
+                    Debug.Log("使用默认菱形精灵");
+                    break;
+                default:
+                    Debug.LogWarning($"未知的形状类型: {shapeType}，使用默认圆形");
+                    image.sprite = ShapeSpriteGenerator.CreateCircleSprite();
+                    break;
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"SetDefaultShapeSprite异常: {e.Message}");
+            SetSimpleDefaultAppearance();
+        }
+    }
+    
+    /// <summary>
+    /// 设置简单的默认外观（不生成纹理，避免卡死）
+    /// </summary>
+    void SetSimpleDefaultAppearance()
+    {
+        if (image != null)
+        {
+            // 使用纯色，不生成纹理
+            image.sprite = null;
+            image.color = new Color(0.8f, 0.8f, 0.8f, 0.8f);
+        }
+        
+        if (rectTransform != null)
+        {
+            rectTransform.sizeDelta = new Vector2(50, 50);
+        }
+        
+        Debug.Log("使用简单默认外观（避免纹理生成卡死）");
     }
     
     public void OnBeginDrag(PointerEventData eventData)

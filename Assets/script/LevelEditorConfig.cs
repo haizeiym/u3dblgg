@@ -254,106 +254,150 @@ public class LevelEditorConfig : ScriptableObject
 
     public void LoadConfigFromFile()
     {
-        if (File.Exists(ConfigPath))
+        try
         {
-            string json = File.ReadAllText(ConfigPath);
-            var data = JsonUtility.FromJson<SerializableConfig>(json);
-            if (data != null)
+            if (File.Exists(ConfigPath))
             {
-                // 转换形状配置
-                this.shapeTypes = new List<ShapeType>();
-                if (data.shapeTypes != null)
+                string json = File.ReadAllText(ConfigPath);
+                var data = JsonUtility.FromJson<SerializableConfig>(json);
+                if (data != null)
                 {
-                    foreach (var serializableShape in data.shapeTypes)
+                    // 转换形状配置
+                    this.shapeTypes = new List<ShapeType>();
+                    if (data.shapeTypes != null)
                     {
-                        var shape = new ShapeType
+                        foreach (var serializableShape in data.shapeTypes)
                         {
-                            name = serializableShape.name
-                        };
-                        shape.sprite = LoadSpriteFromPath(serializableShape.spritePath);
-                        this.shapeTypes.Add(shape);
+                            var shape = new ShapeType
+                            {
+                                name = serializableShape.name
+                            };
+                            // 安全加载精灵，避免卡死
+                            shape.sprite = SafeLoadSpriteFromPath(serializableShape.spritePath);
+                            this.shapeTypes.Add(shape);
+                        }
                     }
-                }
-                
-                // 转换球配置
-                this.ballTypes = new List<BallType>();
-                if (data.ballTypes != null)
-                {
-                    foreach (var serializableBall in data.ballTypes)
+                    
+                    // 转换球配置
+                    this.ballTypes = new List<BallType>();
+                    if (data.ballTypes != null)
                     {
-                        var ball = new BallType
+                        foreach (var serializableBall in data.ballTypes)
                         {
-                            name = serializableBall.name,
-                            color = serializableBall.color
-                        };
-                        ball.sprite = LoadSpriteFromPath(serializableBall.spritePath);
-                        this.ballTypes.Add(ball);
+                            var ball = new BallType
+                            {
+                                name = serializableBall.name,
+                                color = serializableBall.color
+                            };
+                            // 安全加载精灵，避免卡死
+                            ball.sprite = SafeLoadSpriteFromPath(serializableBall.spritePath);
+                            this.ballTypes.Add(ball);
+                        }
                     }
-                }
-                
-                // 转换背景配置
-                this.backgroundConfigs = new List<BackgroundConfig>();
-                if (data.backgroundConfigs != null)
-                {
-                    foreach (var serializableBg in data.backgroundConfigs)
+                    
+                    // 转换背景配置
+                    this.backgroundConfigs = new List<BackgroundConfig>();
+                    if (data.backgroundConfigs != null)
                     {
-                        var bg = new BackgroundConfig
+                        foreach (var serializableBg in data.backgroundConfigs)
                         {
-                            name = serializableBg.name,
-                            backgroundColor = serializableBg.backgroundColor,
-                            useSprite = serializableBg.useSprite,
-                            spriteScale = serializableBg.spriteScale,
-                            spriteOffset = serializableBg.spriteOffset
-                        };
-                        bg.SetSpritePath(serializableBg.spritePath);
-                        this.backgroundConfigs.Add(bg);
+                            var bg = new BackgroundConfig
+                            {
+                                name = serializableBg.name,
+                                backgroundColor = serializableBg.backgroundColor,
+                                useSprite = serializableBg.useSprite,
+                                spriteScale = serializableBg.spriteScale,
+                                spriteOffset = serializableBg.spriteOffset
+                            };
+                            bg.SetSpritePath(serializableBg.spritePath);
+                            this.backgroundConfigs.Add(bg);
+                        }
                     }
+                    
+                    this.currentBackgroundIndex = data.currentBackgroundIndex;
+                    Debug.Log("配置已从文件加载: " + ConfigPath);
+                    
+                    // 检查配置是否为空，如果为空则初始化默认配置（不保存，避免循环）
+                    if (this.shapeTypes.Count == 0 && this.ballTypes.Count == 0)
+                    {
+                        Debug.Log("加载的配置为空，初始化默认配置（不保存）");
+                        InitializeDefaultConfigWithoutSave();
+                    }
+                    
+                    // 触发配置重新加载事件
+                    TriggerConfigReloaded();
                 }
-                
-                this.currentBackgroundIndex = data.currentBackgroundIndex;
-                Debug.Log("配置已从文件加载: " + ConfigPath);
-                
-                // 检查配置是否为空，如果为空则初始化默认配置
-                if (this.shapeTypes.Count == 0 && this.ballTypes.Count == 0)
+                else
                 {
-                    Debug.Log("加载的配置为空，初始化默认配置");
-                    InitializeDefaultConfig();
+                    Debug.LogWarning("配置文件解析失败，初始化默认配置");
+                    InitializeDefaultConfigWithoutSave();
                 }
-                
-                // 触发配置重新加载事件
-                TriggerConfigReloaded();
             }
             else
             {
-                Debug.LogWarning("配置文件解析失败，初始化默认配置");
-                InitializeDefaultConfig();
+                Debug.LogWarning("配置文件不存在: " + ConfigPath + "，初始化默认配置");
+                InitializeDefaultConfigWithoutSave();
             }
         }
-        else
+        catch (System.Exception e)
         {
-            Debug.LogWarning("配置文件不存在: " + ConfigPath + "，初始化默认配置");
-            InitializeDefaultConfig();
+            Debug.LogError($"加载配置文件时发生异常: {e.Message}");
+            Debug.LogError($"异常堆栈: {e.StackTrace}");
+            // 发生异常时初始化默认配置
+            InitializeDefaultConfigWithoutSave();
         }
     }
     
     /// <summary>
-    /// 从路径加载Sprite
+    /// 加载精灵
     /// </summary>
     private Sprite LoadSpriteFromPath(string path)
     {
         if (string.IsNullOrEmpty(path)) return null;
         
-        #if UNITY_EDITOR
-        return UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
-        #else
-        // 运行时尝试从Resources加载
-        string resourcePath = GetResourcePath(path);
-        if (!string.IsNullOrEmpty(resourcePath))
+        try
         {
-            return Resources.Load<Sprite>(resourcePath);
+            #if UNITY_EDITOR
+            var sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            if (sprite != null)
+            {
+                return sprite;
+            }
+            #else
+            // 运行时尝试从Resources加载
+            string resourcePath = GetResourcePath(path);
+            if (!string.IsNullOrEmpty(resourcePath))
+            {
+                return Resources.Load<Sprite>(resourcePath);
+            }
+            #endif
+            
+            Debug.LogWarning($"无法加载精灵: {path}");
+            return null;
         }
-        return null;
-        #endif
+        catch (System.Exception e)
+        {
+            Debug.LogError($"LoadSpriteFromPath异常: {path}, 错误: {e.Message}");
+            return null;
+        }
+    }
+    
+    /// <summary>
+    /// 安全加载精灵，避免卡死
+    /// </summary>
+    private Sprite SafeLoadSpriteFromPath(string path)
+    {
+        if (string.IsNullOrEmpty(path)) return null;
+        
+        try
+        {
+            return LoadSpriteFromPath(path);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"加载精灵时发生异常: {path}, 错误: {e.Message}");
+            return null;
+        }
     }
     
     /// <summary>
@@ -403,36 +447,73 @@ public class LevelEditorConfig : ScriptableObject
     }
     
     /// <summary>
+    /// 初始化默认配置（不保存，避免循环调用）
+    /// </summary>
+    public void InitializeDefaultConfigWithoutSave()
+    {
+        shapeTypes = new List<ShapeType>
+        {
+            new ShapeType { name = "圆形", sprite = LoadDefaultShapeSprite("圆形", "蓝色圆") },
+            new ShapeType { name = "矩形", sprite = LoadDefaultShapeSprite("矩形", "红色花瓣") },
+            new ShapeType { name = "三角形", sprite = LoadDefaultShapeSprite("三角形", "蓝三角") },
+            new ShapeType { name = "菱形", sprite = LoadDefaultShapeSprite("菱形", "蓝色菱形") }
+        };
+        ballTypes = new List<BallType>
+        {
+            new BallType { name = "红球", color = Color.red, sprite = LoadDefaultBallSprite("红球", "red") },
+            new BallType { name = "蓝球", color = Color.blue, sprite = LoadDefaultBallSprite("蓝球", "blue") },
+            new BallType { name = "绿球", color = Color.green, sprite = LoadDefaultBallSprite("绿球", "green") }
+        };
+        
+        backgroundConfigs = new List<BackgroundConfig>
+        {
+            new BackgroundConfig { name = "默认背景", backgroundColor = Color.white, useSprite = false },
+            new BackgroundConfig { name = "网格背景", backgroundColor = new Color(0.9f, 0.9f, 0.9f), useSprite = false },
+            new BackgroundConfig { name = "深色背景", backgroundColor = new Color(0.2f, 0.2f, 0.2f), useSprite = false }
+        };
+        
+        Debug.Log("默认配置已初始化（未保存到文件，避免循环调用）");
+    }
+    
+    /// <summary>
     /// 加载默认形状精灵
     /// </summary>
     private Sprite LoadDefaultShapeSprite(string shapeName, string fileName)
     {
-        // 尝试从多个可能的路径加载
-        string[] possiblePaths = {
-            $"Assets/Textures/pieces/{fileName}.png",
-            $"Assets/Textures/cicle/{fileName}.png",
-            $"Assets/Textures/shapes/{fileName}.png",
-            $"Assets/Sprites/{fileName}.png",
-            $"Assets/Textures/pieces/{shapeName}.png",
-            $"Assets/Textures/cicle/{shapeName}.png",
-            $"Assets/Textures/shapes/{shapeName}.png",
-            $"Assets/Sprites/{shapeName}.png"
-        };
-        
-        foreach (string path in possiblePaths)
+        try
         {
-            #if UNITY_EDITOR
-            var sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
-            if (sprite != null)
+            // 尝试从多个可能的路径加载
+            string[] possiblePaths = {
+                $"Assets/Textures/pieces/{fileName}.png",
+                $"Assets/Textures/cicle/{fileName}.png",
+                $"Assets/Textures/shapes/{fileName}.png",
+                $"Assets/Sprites/{fileName}.png",
+                $"Assets/Textures/pieces/{shapeName}.png",
+                $"Assets/Textures/cicle/{shapeName}.png",
+                $"Assets/Textures/shapes/{shapeName}.png",
+                $"Assets/Sprites/{shapeName}.png"
+            };
+            
+            foreach (string path in possiblePaths)
             {
-                Debug.Log($"找到形状精灵: {path}");
-                return sprite;
+                #if UNITY_EDITOR
+                var sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
+                if (sprite != null)
+                {
+                    Debug.Log($"找到形状精灵: {path}");
+                    return sprite;
+                }
+                #endif
             }
-            #endif
+            
+            Debug.LogWarning($"未找到形状精灵: {shapeName} (尝试的文件名: {fileName})");
+            return null;
         }
-        
-        Debug.LogWarning($"未找到形状精灵: {shapeName} (尝试的文件名: {fileName})");
-        return null;
+        catch (System.Exception e)
+        {
+            Debug.LogError($"LoadDefaultShapeSprite异常: {shapeName}, 错误: {e.Message}");
+            return null;
+        }
     }
     
     /// <summary>
@@ -440,30 +521,38 @@ public class LevelEditorConfig : ScriptableObject
     /// </summary>
     private Sprite LoadDefaultBallSprite(string ballName, string fileName)
     {
-        // 尝试从多个可能的路径加载
-        string[] possiblePaths = {
-            $"Assets/Textures/ball/{fileName}.png",
-            $"Assets/Textures/balls/{fileName}.png",
-            $"Assets/Sprites/{fileName}.png",
-            $"Assets/Textures/ball/{ballName}.png",
-            $"Assets/Textures/balls/{ballName}.png",
-            $"Assets/Sprites/{ballName}.png"
-        };
-        
-        foreach (string path in possiblePaths)
+        try
         {
-            #if UNITY_EDITOR
-            var sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
-            if (sprite != null)
+            // 尝试从多个可能的路径加载
+            string[] possiblePaths = {
+                $"Assets/Textures/ball/{fileName}.png",
+                $"Assets/Textures/balls/{fileName}.png",
+                $"Assets/Sprites/{fileName}.png",
+                $"Assets/Textures/ball/{ballName}.png",
+                $"Assets/Textures/balls/{ballName}.png",
+                $"Assets/Sprites/{ballName}.png"
+            };
+            
+            foreach (string path in possiblePaths)
             {
-                Debug.Log($"找到球精灵: {path}");
-                return sprite;
+                #if UNITY_EDITOR
+                var sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
+                if (sprite != null)
+                {
+                    Debug.Log($"找到球精灵: {path}");
+                    return sprite;
+                }
+                #endif
             }
-            #endif
+            
+            Debug.LogWarning($"未找到球精灵: {ballName} (尝试的文件名: {fileName})");
+            return null;
         }
-        
-        Debug.LogWarning($"未找到球精灵: {ballName} (尝试的文件名: {fileName})");
-        return null;
+        catch (System.Exception e)
+        {
+            Debug.LogError($"LoadDefaultBallSprite异常: {ballName}, 错误: {e.Message}");
+            return null;
+        }
     }
 
     public void AddShapeType(string name)

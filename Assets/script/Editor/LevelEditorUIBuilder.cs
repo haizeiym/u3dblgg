@@ -1,9 +1,11 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
+using UnityEditor;
 
 /// <summary>
 /// 关卡编辑器UI构建器
-/// 负责创建关卡编辑器的UI结构
+/// 负责创建关卡编辑器的UI结构，不处理事件绑定
 /// </summary>
 public class LevelEditorUIBuilder
 {
@@ -14,12 +16,50 @@ public class LevelEditorUIBuilder
         levelEditor = editor;
     }
     
+    /// <summary>
+    /// 确保配置已加载
+    /// </summary>
+    void EnsureConfigLoaded()
+    {
+        try
+        {
+            var config = LevelEditorConfig.Instance;
+            if (config != null)
+            {
+                // 尝试从文件加载配置
+                config.LoadConfigFromFile();
+                Debug.Log("LevelEditorUIBuilder: 配置已加载");
+                
+                // 如果配置为空，初始化默认配置
+                if (config.shapeTypes.Count == 0 && config.ballTypes.Count == 0)
+                {
+                    Debug.Log("LevelEditorUIBuilder: 配置为空，初始化默认配置");
+                    config.InitializeDefaultConfig();
+                }
+                
+                Debug.Log($"LevelEditorUIBuilder: 配置加载完成 - 形状: {config.shapeTypes.Count}, 球: {config.ballTypes.Count}, 背景: {config.backgroundConfigs.Count}");
+            }
+            else
+            {
+                Debug.LogError("LevelEditorUIBuilder: 无法获取LevelEditorConfig实例");
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"LevelEditorUIBuilder: 配置加载失败: {e.Message}");
+        }
+    }
+    
     public void CreateUIStructure()
     {
+        Debug.Log("开始创建UI结构...");
+        
         CreateLeftPanel();
         CreateCenterPanel();
         CreateRightPanel();
         CreatePrefabs();
+        
+        Debug.Log("UI结构创建完成");
     }
     
     void CreateLeftPanel()
@@ -63,11 +103,87 @@ public class LevelEditorUIBuilder
     
     void CreateLeftPanelButtons(GameObject parent)
     {
-        GameObject addButton = UIComponentBuilder.CreateButton(parent, "添加层级", new Vector2(0, 0.9f));
-        levelEditor.addLayerButton = addButton.GetComponent<Button>();
+        Debug.Log("创建左侧面板按钮...");
         
-        GameObject deleteButton = UIComponentBuilder.CreateButton(parent, "删除层级", new Vector2(0, 0.85f));
-        levelEditor.deleteLayerButton = deleteButton.GetComponent<Button>();
+        // 创建添加层级按钮
+        GameObject addButton = new GameObject("添加层级Button");
+        addButton.transform.SetParent(parent.transform, false);
+        
+        RectTransform addButtonRect = addButton.AddComponent<RectTransform>();
+        addButtonRect.anchorMin = new Vector2(0, 0.9f);
+        addButtonRect.anchorMax = new Vector2(0.15f, 0.95f);
+        addButtonRect.offsetMin = Vector2.zero;
+        addButtonRect.offsetMax = Vector2.zero;
+        
+        Image addButtonBg = addButton.AddComponent<Image>();
+        addButtonBg.color = new Color(0.4f, 0.4f, 0.4f, 1f);
+        addButtonBg.raycastTarget = true;
+        
+        Button addButtonComponent = addButton.AddComponent<Button>();
+        addButtonComponent.targetGraphic = addButtonBg;
+        addButtonComponent.interactable = true;
+        addButtonComponent.transition = Selectable.Transition.ColorTint;
+        addButtonComponent.navigation = new Navigation() { mode = Navigation.Mode.None };
+        
+        levelEditor.addLayerButton = addButtonComponent;
+        
+        // 创建按钮文本
+        GameObject addTextObj = new GameObject("Text");
+        addTextObj.transform.SetParent(addButton.transform, false);
+        
+        RectTransform addTextRect = addTextObj.AddComponent<RectTransform>();
+        addTextRect.anchorMin = Vector2.zero;
+        addTextRect.anchorMax = Vector2.one;
+        addTextRect.offsetMin = Vector2.zero;
+        addTextRect.offsetMax = Vector2.zero;
+        
+        Text addTextComponent = addTextObj.AddComponent<Text>();
+        addTextComponent.text = "添加层级";
+        addTextComponent.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        addTextComponent.fontSize = 20;
+        addTextComponent.color = Color.white;
+        addTextComponent.alignment = TextAnchor.MiddleCenter;
+        
+        // 创建删除层级按钮
+        GameObject deleteButton = new GameObject("删除层级Button");
+        deleteButton.transform.SetParent(parent.transform, false);
+        
+        RectTransform deleteButtonRect = deleteButton.AddComponent<RectTransform>();
+        deleteButtonRect.anchorMin = new Vector2(0, 0.85f);
+        deleteButtonRect.anchorMax = new Vector2(0.15f, 0.9f);
+        deleteButtonRect.offsetMin = Vector2.zero;
+        deleteButtonRect.offsetMax = Vector2.zero;
+        
+        Image deleteButtonBg = deleteButton.AddComponent<Image>();
+        deleteButtonBg.color = new Color(0.4f, 0.4f, 0.4f, 1f);
+        deleteButtonBg.raycastTarget = true;
+        
+        Button deleteButtonComponent = deleteButton.AddComponent<Button>();
+        deleteButtonComponent.targetGraphic = deleteButtonBg;
+        deleteButtonComponent.interactable = true;
+        deleteButtonComponent.transition = Selectable.Transition.ColorTint;
+        deleteButtonComponent.navigation = new Navigation() { mode = Navigation.Mode.None };
+        
+        levelEditor.deleteLayerButton = deleteButtonComponent;
+        
+        // 创建按钮文本
+        GameObject deleteTextObj = new GameObject("Text");
+        deleteTextObj.transform.SetParent(deleteButton.transform, false);
+        
+        RectTransform deleteTextRect = deleteTextObj.AddComponent<RectTransform>();
+        deleteTextRect.anchorMin = Vector2.zero;
+        deleteTextRect.anchorMax = Vector2.one;
+        deleteTextRect.offsetMin = Vector2.zero;
+        deleteTextRect.offsetMax = Vector2.zero;
+        
+        Text deleteTextComponent = deleteTextObj.AddComponent<Text>();
+        deleteTextComponent.text = "删除层级";
+        deleteTextComponent.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        deleteTextComponent.fontSize = 20;
+        deleteTextComponent.color = Color.white;
+        deleteTextComponent.alignment = TextAnchor.MiddleCenter;
+        
+        Debug.Log("左侧面板按钮创建完成");
     }
     
     void CreateCenterPanel()
@@ -123,6 +239,14 @@ public class LevelEditorUIBuilder
         
         GameObject addBallButton = UIComponentBuilder.CreateButton(toolbar, "添加球", new Vector2(0.3f, 0));
         levelEditor.addBallButton = addBallButton.GetComponent<Button>();
+        
+        // 创建背景按钮
+        GameObject backgroundButton = UIComponentBuilder.CreateButton(toolbar, "背景", new Vector2(0.5f, 0));
+        levelEditor.backgroundButton = backgroundButton.GetComponent<Button>();
+        
+        // 创建预览按钮
+        GameObject previewButton = UIComponentBuilder.CreateButton(toolbar, "预览", new Vector2(0.7f, 0));
+        levelEditor.previewButton = previewButton.GetComponent<Button>();
     }
     
     void CreateRightPanel()
@@ -165,17 +289,20 @@ public class LevelEditorUIBuilder
         
         // 导入导出按钮
         GameObject importButton = UIComponentBuilder.CreateButton(parent, "导入关卡", new Vector2(0, 0.15f));
-        importButton.GetComponent<Button>().onClick.AddListener(() => levelEditor.ImportLevel());
+        levelEditor.importButton = importButton.GetComponent<Button>();
         
         GameObject exportButton = UIComponentBuilder.CreateButton(parent, "导出JSON", new Vector2(0, 0.1f));
         levelEditor.exportButton = exportButton.GetComponent<Button>();
     }
     
     /// <summary>
-    /// 创建形状类型按钮列表（使用Unity自带简单按钮）
+    /// 创建形状类型按钮列表
     /// </summary>
     public void CreateShapeTypeButtons(GameObject parent, Vector2 position)
     {
+        // 确保配置已加载
+        EnsureConfigLoaded();
+        
         // 创建标签
         GameObject labelObj = new GameObject("TypeLabel");
         labelObj.transform.SetParent(parent.transform, false);
@@ -195,6 +322,7 @@ public class LevelEditorUIBuilder
         
         // 从配置中获取形状类型
         string[] shapeTypes = LevelEditorConfig.Instance.GetShapeTypeNames();
+        Debug.Log($"获取到 {shapeTypes.Length} 个形状类型");
         levelEditor.shapeTypeButtons = new Button[shapeTypes.Length];
         
         for (int i = 0; i < shapeTypes.Length; i++)
@@ -207,101 +335,16 @@ public class LevelEditorUIBuilder
             RectTransform buttonRect = buttonObj.GetComponent<RectTransform>();
             buttonRect.sizeDelta = new Vector2(0, 20);
             
-            // 设置按钮点击事件
-            int index = i; // 捕获循环变量
-            Button button = buttonObj.GetComponent<Button>();
-            button.onClick.AddListener(() => {
-                Debug.Log($"形状类型按钮 {shapeTypes[index]} 被点击！");
-                OnShapeTypeButtonClicked(index, shapeTypes[index]);
-            });
-            
-            levelEditor.shapeTypeButtons[i] = button;
-        }
-    }
-    
-    /// <summary>
-    /// 形状类型按钮点击事件
-    /// </summary>
-    public void OnShapeTypeButtonClicked(int index, string shapeType)
-    {
-        Debug.Log($"点击形状类型按钮: {shapeType} (索引: {index})");
-        
-        // 更新当前形状类型索引（用于新建形状时使用）
-        levelEditor.currentShapeTypeIndex = index;
-        
-        // 更新按钮状态（选中/未选中）
-        for (int i = 0; i < levelEditor.shapeTypeButtons.Length; i++)
-        {
-            Image buttonBg = levelEditor.shapeTypeButtons[i].GetComponent<Image>();
-            if (buttonBg != null)
-            {
-                if (i == index)
-                {
-                    buttonBg.color = new Color(0.2f, 0.6f, 1f, 1f); // 选中状态
-                }
-                else
-                {
-                    buttonBg.color = new Color(0.4f, 0.4f, 0.4f, 1f); // 未选中状态
-                }
-            }
-        }
-        
-        // 检查是否有选中的形状，如果有则更新类型
-        if (levelEditor.selectedShape != null)
-        {
-            // 调用LevelEditorUI的公共方法更新类型
-            levelEditor.UpdateShapeType(index);
-            Debug.Log($"形状类型已更新为: {shapeType}");
-        }
-        else
-        {
-            Debug.Log($"已选择形状类型: {shapeType}（用于新建形状）");
-        }
-    }
-    
-    /// <summary>
-    /// 球类型按钮点击事件
-    /// </summary>
-    public void OnBallTypeButtonClicked(int index, string ballType)
-    {
-        Debug.Log($"点击球类型按钮: {ballType} (索引: {index})");
-        
-        // 更新当前球类型索引（用于新建球时使用）
-        levelEditor.currentBallTypeIndex = index;
-        
-        // 更新按钮状态（选中/未选中）
-        for (int i = 0; i < levelEditor.ballTypeButtons.Length; i++)
-        {
-            Image buttonBg = levelEditor.ballTypeButtons[i].GetComponent<Image>();
-            if (buttonBg != null)
-            {
-                if (i == index)
-                {
-                    buttonBg.color = new Color(0.2f, 0.6f, 1f, 1f); // 选中状态
-                }
-                else
-                {
-                    buttonBg.color = new Color(0.4f, 0.4f, 0.4f, 1f); // 未选中状态
-                }
-            }
-        }
-        
-        // 检查是否有选中的球，如果有则更新类型
-        if (levelEditor.selectedBall != null)
-        {
-            // 调用LevelEditorUI的公共方法更新类型
-            levelEditor.UpdateBallType(index);
-            Debug.Log($"球类型已更新为: {ballType}");
-        }
-        else
-        {
-            Debug.Log($"已选择球类型: {ballType}（用于新建球）");
+            levelEditor.shapeTypeButtons[i] = buttonObj.GetComponent<Button>();
         }
     }
     
     public void CreateBallTypeButtons(GameObject parent, Vector2 position)
     {
         Debug.Log("开始创建球类型按钮...");
+        
+        // 确保配置已加载
+        EnsureConfigLoaded();
         
         // 创建标签
         GameObject labelObj = new GameObject("BallTypeLabel");
@@ -322,6 +365,7 @@ public class LevelEditorUIBuilder
         
         // 从配置中获取球类型
         string[] ballTypes = LevelEditorConfig.Instance.GetBallTypeNames();
+        Debug.Log($"获取到 {ballTypes.Length} 个球类型");
         levelEditor.ballTypeButtons = new Button[ballTypes.Length];
         
         for (int i = 0; i < ballTypes.Length; i++)
@@ -330,18 +374,8 @@ public class LevelEditorUIBuilder
             GameObject buttonObj = UIComponentBuilder.CreateButton(parent, ballTypes[i], buttonPos);
             RectTransform buttonRect = buttonObj.GetComponent<RectTransform>();
             buttonRect.sizeDelta = new Vector2(0, 20);
-            int index = i;
-            Button button = buttonObj.GetComponent<Button>();
             
-            // 添加调试信息
-            Debug.Log($"为球类型按钮 {ballTypes[i]} 添加点击事件，索引: {index}");
-            
-            button.onClick.AddListener(() => {
-                Debug.Log($"球类型按钮 {ballTypes[index]} 被点击！");
-                OnBallTypeButtonClicked(index, ballTypes[index]);
-            });
-            
-            levelEditor.ballTypeButtons[i] = button;
+            levelEditor.ballTypeButtons[i] = buttonObj.GetComponent<Button>();
         }
         
         Debug.Log($"球类型按钮创建完成，共创建 {ballTypes.Length} 个按钮");
@@ -360,22 +394,5 @@ public class LevelEditorUIBuilder
         ballPrefab.AddComponent<Image>();
         ballPrefab.AddComponent<BallController>();
         levelEditor.ballPrefab = ballPrefab;
-    }
-    
-    /// <summary>
-    /// 示例：如何添加额外的按钮（一键配置）
-    /// </summary>
-    void CreateAdditionalButtons(GameObject parent)
-    {
-        // 示例1：创建简单的按钮
-        GameObject simpleButton = UIComponentBuilder.CreateButton(parent, "简单按钮", new Vector2(0, 0.4f));
-        
-        // 示例2：创建多个按钮
-        string[] buttonTexts = { "按钮A", "按钮B", "按钮C" };
-        for (int i = 0; i < buttonTexts.Length; i++)
-        {
-            Vector2 pos = new Vector2(0, 0.3f - (i * 0.03f));
-            GameObject button = UIComponentBuilder.CreateButton(parent, buttonTexts[i], pos);
-        }
     }
 } 

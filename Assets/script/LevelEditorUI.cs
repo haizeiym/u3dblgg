@@ -34,6 +34,7 @@ public class LevelEditorUI : MonoBehaviour
     public Button[] shapeTypeButtons; // 替换Dropdown为按钮数组
     public Button[] ballTypeButtons; // 新增：球类型按钮数组
     public Button exportButton;
+    public Button importButton; // 新增：导入按钮
     
     [Header("Prefabs")]
     public GameObject shapePrefab;
@@ -62,8 +63,13 @@ public class LevelEditorUI : MonoBehaviour
     void Awake()
     {
         InitializeManagers();
-        SetupEventListeners();
         InitializeDefaultData();
+    }
+    
+    void Start()
+    {
+        // 在运行时自动绑定事件
+        SetupEventListeners();
     }
     
     void InitializeManagers()
@@ -128,25 +134,502 @@ public class LevelEditorUI : MonoBehaviour
     }
     #endif
     
-    void SetupEventListeners()
+    /// <summary>
+    /// 设置所有事件监听器（只在运行时调用）
+    /// </summary>
+    public void SetupEventListeners()
     {
-        if (addLayerButton) addLayerButton.onClick.AddListener(AddLayer);
-        if (deleteLayerButton) deleteLayerButton.onClick.AddListener(DeleteLayer);
-        if (addShapeButton) addShapeButton.onClick.AddListener(AddShape);
-        if (addBallButton) addBallButton.onClick.AddListener(AddBall);
-        if (backgroundButton) backgroundButton.onClick.AddListener(SwitchBackground);
-        if (previewButton) previewButton.onClick.AddListener(ShowConfigPreview);
-        if (exportButton) exportButton.onClick.AddListener(ExportLevel);
+        // 只在运行时调用
+        #if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            Debug.LogWarning("SetupEventListeners只能在运行时调用，编辑器模式下跳过");
+            return;
+        }
+        #endif
         
-        SetupPropertyListeners();
+        Debug.Log("开始设置事件监听器...");
+        
+        // 检查UI组件是否已创建
+        if (!CheckUIComponents())
+        {
+            Debug.LogWarning("UI组件未完全创建，跳过事件绑定");
+            return;
+        }
+        
+        // 左侧面板按钮事件
+        SetupLeftPanelEvents();
+        
+        // 工具栏按钮事件
+        SetupToolbarEvents();
+        
+        // 属性面板事件
+        SetupPropertyEvents();
+        
+        // 形状类型和球类型按钮事件
+        SetupTypeButtonEvents();
+        
+        Debug.Log("事件监听器设置完成");
     }
     
-    void SetupPropertyListeners()
+    /// <summary>
+    /// 检查UI组件是否已创建
+    /// </summary>
+    bool CheckUIComponents()
     {
-        if (positionXSlider) positionXSlider.onValueChanged.AddListener(OnPositionXChanged);
-        if (positionYSlider) positionYSlider.onValueChanged.AddListener(OnPositionYChanged);
-        if (rotationSlider) rotationSlider.onValueChanged.AddListener(OnRotationChanged);
-        // 形状类型按钮的事件在LevelEditorUIBuilder中设置
+        bool allComponentsExist = true;
+        
+        // 检查主要按钮
+        if (addLayerButton == null)
+        {
+            Debug.LogWarning("添加层级按钮未创建");
+            allComponentsExist = false;
+        }
+        
+        if (deleteLayerButton == null)
+        {
+            Debug.LogWarning("删除层级按钮未创建");
+            allComponentsExist = false;
+        }
+        
+        if (addShapeButton == null)
+        {
+            Debug.LogWarning("添加形状按钮未创建");
+            allComponentsExist = false;
+        }
+        
+        if (addBallButton == null)
+        {
+            Debug.LogWarning("添加球按钮未创建");
+            allComponentsExist = false;
+        }
+        
+        if (exportButton == null)
+        {
+            Debug.LogWarning("导出按钮未创建");
+            allComponentsExist = false;
+        }
+        
+        if (importButton == null)
+        {
+            Debug.LogWarning("导入按钮未创建");
+            allComponentsExist = false;
+        }
+        
+        // 检查面板
+        if (leftPanel == null)
+        {
+            Debug.LogWarning("左侧面板未创建");
+            allComponentsExist = false;
+        }
+        
+        if (centerPanel == null)
+        {
+            Debug.LogWarning("中央面板未创建");
+            allComponentsExist = false;
+        }
+        
+        if (rightPanel == null)
+        {
+            Debug.LogWarning("右侧面板未创建");
+            allComponentsExist = false;
+        }
+        
+        if (allComponentsExist)
+        {
+            Debug.Log("✓ 所有UI组件已创建");
+        }
+        else
+        {
+            Debug.LogError("✗ 部分UI组件未创建，无法绑定事件");
+        }
+        
+        return allComponentsExist;
+    }
+    
+    /// <summary>
+    /// 延迟设置事件监听器（当UI组件可能未完全创建时使用）
+    /// </summary>
+    public void SetupEventListenersDelayed()
+    {
+        #if UNITY_EDITOR
+        StartCoroutine(SetupEventListenersCoroutine());
+        #endif
+    }
+    
+    #if UNITY_EDITOR
+    System.Collections.IEnumerator SetupEventListenersCoroutine()
+    {
+        Debug.Log("等待UI组件创建完成...");
+        
+        // 等待最多10帧，确保UI组件创建完成
+        int maxFrames = 10;
+        int currentFrame = 0;
+        
+        while (currentFrame < maxFrames)
+        {
+            yield return null;
+            currentFrame++;
+            
+            if (CheckUIComponents())
+            {
+                Debug.Log($"UI组件在第{currentFrame}帧创建完成");
+                SetupEventListeners();
+                yield break;
+            }
+        }
+        
+        Debug.LogError("等待超时，UI组件仍未完全创建");
+    }
+    #endif
+    
+    /// <summary>
+    /// 设置左侧面板事件
+    /// </summary>
+    void SetupLeftPanelEvents()
+    {
+        if (addLayerButton != null)
+        {
+            addLayerButton.onClick.AddListener(OnAddLayerClicked);
+            Debug.Log("添加层级按钮事件绑定成功");
+        }
+        else
+        {
+            Debug.LogError("添加层级按钮为空");
+        }
+        
+        if (deleteLayerButton != null)
+        {
+            deleteLayerButton.onClick.AddListener(OnDeleteLayerClicked);
+            Debug.Log("删除层级按钮事件绑定成功");
+        }
+        else
+        {
+            Debug.LogError("删除层级按钮为空");
+        }
+    }
+    
+    /// <summary>
+    /// 设置工具栏事件
+    /// </summary>
+    void SetupToolbarEvents()
+    {
+        if (addShapeButton != null)
+        {
+            addShapeButton.onClick.AddListener(OnAddShapeClicked);
+            Debug.Log("添加形状按钮事件绑定成功");
+        }
+        else
+        {
+            Debug.LogError("添加形状按钮为空");
+        }
+        
+        if (addBallButton != null)
+        {
+            addBallButton.onClick.AddListener(OnAddBallClicked);
+            Debug.Log("添加球按钮事件绑定成功");
+        }
+        else
+        {
+            Debug.LogError("添加球按钮为空");
+        }
+        
+        if (backgroundButton != null)
+        {
+            backgroundButton.onClick.AddListener(OnBackgroundClicked);
+            Debug.Log("背景按钮事件绑定成功");
+        }
+        else
+        {
+            Debug.LogError("背景按钮为空");
+        }
+        
+        if (previewButton != null)
+        {
+            previewButton.onClick.AddListener(OnPreviewClicked);
+            Debug.Log("预览按钮事件绑定成功");
+        }
+        else
+        {
+            Debug.LogError("预览按钮为空");
+        }
+    }
+    
+    /// <summary>
+    /// 设置属性面板事件
+    /// </summary>
+    void SetupPropertyEvents()
+    {
+        if (positionXSlider != null)
+        {
+            positionXSlider.onValueChanged.AddListener(OnPositionXChanged);
+            Debug.Log("位置X滑块事件绑定成功");
+        }
+        
+        if (positionYSlider != null)
+        {
+            positionYSlider.onValueChanged.AddListener(OnPositionYChanged);
+            Debug.Log("位置Y滑块事件绑定成功");
+        }
+        
+        if (rotationSlider != null)
+        {
+            rotationSlider.onValueChanged.AddListener(OnRotationChanged);
+            Debug.Log("旋转滑块事件绑定成功");
+        }
+        
+        if (exportButton != null)
+        {
+            exportButton.onClick.AddListener(OnExportClicked);
+            Debug.Log("导出按钮事件绑定成功");
+        }
+        else
+        {
+            Debug.LogError("导出按钮为空");
+        }
+        
+        if (importButton != null)
+        {
+            importButton.onClick.AddListener(OnImportClicked);
+            Debug.Log("导入按钮事件绑定成功");
+        }
+        else
+        {
+            Debug.LogError("导入按钮为空");
+        }
+    }
+    
+    /// <summary>
+    /// 设置类型按钮事件
+    /// </summary>
+    void SetupTypeButtonEvents()
+    {
+        // 形状类型按钮事件
+        if (shapeTypeButtons != null)
+        {
+            for (int i = 0; i < shapeTypeButtons.Length; i++)
+            {
+                int index = i; // 捕获循环变量
+                if (shapeTypeButtons[i] != null)
+                {
+                    shapeTypeButtons[i].onClick.AddListener(() => OnShapeTypeButtonClicked(index));
+                    Debug.Log($"形状类型按钮[{index}]事件绑定成功");
+                }
+            }
+        }
+        
+        // 球类型按钮事件
+        if (ballTypeButtons != null)
+        {
+            for (int i = 0; i < ballTypeButtons.Length; i++)
+            {
+                int index = i; // 捕获循环变量
+                if (ballTypeButtons[i] != null)
+                {
+                    ballTypeButtons[i].onClick.AddListener(() => OnBallTypeButtonClicked(index));
+                    Debug.Log($"球类型按钮[{index}]事件绑定成功");
+                }
+            }
+        }
+    }
+    
+    // 事件处理方法
+    void OnAddLayerClicked()
+    {
+        Debug.Log("添加层级按钮被点击！");
+        AddLayer();
+    }
+    
+    void OnDeleteLayerClicked()
+    {
+        Debug.Log("删除层级按钮被点击！");
+        DeleteLayer();
+    }
+    
+    void OnAddShapeClicked()
+    {
+        Debug.Log("添加形状按钮被点击！");
+        
+        // 添加安全检查
+        if (dataManager == null)
+        {
+            Debug.LogError("dataManager为空，无法添加形状");
+            return;
+        }
+        
+        try
+        {
+            AddShape();
+            Debug.Log("添加形状操作完成");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"添加形状时发生异常: {e.Message}");
+            Debug.LogError($"异常堆栈: {e.StackTrace}");
+        }
+    }
+    
+    void OnAddBallClicked()
+    {
+        Debug.Log("添加球按钮被点击！");
+        
+        // 添加安全检查
+        if (dataManager == null)
+        {
+            Debug.LogError("dataManager为空，无法添加球");
+            return;
+        }
+        
+        try
+        {
+            AddBall();
+            Debug.Log("添加球操作完成");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"添加球时发生异常: {e.Message}");
+            Debug.LogError($"异常堆栈: {e.StackTrace}");
+        }
+    }
+    
+    void OnBackgroundClicked()
+    {
+        Debug.Log("背景按钮被点击！");
+        SwitchBackground();
+    }
+    
+    void OnPreviewClicked()
+    {
+        Debug.Log("预览按钮被点击！");
+        ShowConfigPreview();
+    }
+    
+    void OnImportClicked()
+    {
+        Debug.Log("导入关卡按钮被点击！");
+        ImportLevel();
+    }
+    
+    void OnExportClicked()
+    {
+        Debug.Log("导出JSON按钮被点击！");
+        ExportLevel();
+    }
+    
+    /// <summary>
+    /// 形状类型按钮点击事件
+    /// </summary>
+    void OnShapeTypeButtonClicked(int index)
+    {
+        var config = LevelEditorConfig.Instance;
+        if (config != null && index < config.shapeTypes.Count)
+        {
+            string shapeType = config.shapeTypes[index].name;
+            Debug.Log($"点击形状类型按钮: {shapeType} (索引: {index})");
+            
+            // 更新当前形状类型索引
+            currentShapeTypeIndex = index;
+            
+            // 更新按钮状态（选中/未选中）
+            UpdateShapeTypeButtonStates(index);
+            
+            // 检查是否有选中的形状，如果有则更新类型
+            if (selectedShape != null)
+            {
+                UpdateShapeType(index);
+                Debug.Log($"形状类型已更新为: {shapeType}");
+            }
+            else
+            {
+                Debug.Log($"已选择形状类型: {shapeType}（用于新建形状）");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 球类型按钮点击事件
+    /// </summary>
+    void OnBallTypeButtonClicked(int index)
+    {
+        var config = LevelEditorConfig.Instance;
+        if (config != null && index < config.ballTypes.Count)
+        {
+            string ballType = config.ballTypes[index].name;
+            Debug.Log($"点击球类型按钮: {ballType} (索引: {index})");
+            
+            // 更新当前球类型索引
+            currentBallTypeIndex = index;
+            
+            // 更新按钮状态（选中/未选中）
+            UpdateBallTypeButtonStates(index);
+            
+            // 检查是否有选中的球，如果有则更新类型
+            if (selectedBall != null)
+            {
+                UpdateBallType(index);
+                Debug.Log($"球类型已更新为: {ballType}");
+            }
+            else
+            {
+                Debug.Log($"已选择球类型: {ballType}（用于新建球）");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 更新形状类型按钮状态
+    /// </summary>
+    void UpdateShapeTypeButtonStates(int selectedIndex)
+    {
+        if (shapeTypeButtons != null)
+        {
+            for (int i = 0; i < shapeTypeButtons.Length; i++)
+            {
+                if (shapeTypeButtons[i] != null)
+                {
+                    Image buttonBg = shapeTypeButtons[i].GetComponent<Image>();
+                    if (buttonBg != null)
+                    {
+                        if (i == selectedIndex)
+                        {
+                            buttonBg.color = new Color(0.2f, 0.6f, 1f, 1f); // 选中状态
+                        }
+                        else
+                        {
+                            buttonBg.color = new Color(0.4f, 0.4f, 0.4f, 1f); // 未选中状态
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 更新球类型按钮状态
+    /// </summary>
+    void UpdateBallTypeButtonStates(int selectedIndex)
+    {
+        if (ballTypeButtons != null)
+        {
+            for (int i = 0; i < ballTypeButtons.Length; i++)
+            {
+                if (ballTypeButtons[i] != null)
+                {
+                    Image buttonBg = ballTypeButtons[i].GetComponent<Image>();
+                    if (buttonBg != null)
+                    {
+                        if (i == selectedIndex)
+                        {
+                            buttonBg.color = new Color(0.2f, 0.6f, 1f, 1f); // 选中状态
+                        }
+                        else
+                        {
+                            buttonBg.color = new Color(0.4f, 0.4f, 0.4f, 1f); // 未选中状态
+                        }
+                    }
+                }
+            }
+        }
     }
     
     void InitializeDefaultData()
@@ -256,17 +739,17 @@ public class LevelEditorUI : MonoBehaviour
         if (uiManager != null) uiManager.SelectBall(ball);
     }
     
-    void OnPositionXChanged(float value)
+    public void OnPositionXChanged(float value)
     {
         if (uiManager != null) uiManager.UpdatePositionX(value);
     }
     
-    void OnPositionYChanged(float value)
+    public void OnPositionYChanged(float value)
     {
         if (uiManager != null) uiManager.UpdatePositionY(value);
     }
     
-    void OnRotationChanged(float value)
+    public void OnRotationChanged(float value)
     {
         if (uiManager != null) uiManager.UpdateRotation(value);
     }
