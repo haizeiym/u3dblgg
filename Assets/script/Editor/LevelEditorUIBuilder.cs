@@ -282,10 +282,16 @@ public class LevelEditorUIBuilder
         GameObject rotSlider = UIComponentBuilder.CreateSlider(parent, "旋转", new Vector2(0, 0.6f));
         levelEditor.rotationSlider = rotSlider.GetComponent<Slider>();
         
-        // 形状类型按钮
-        CreateShapeTypeButtons(parent, new Vector2(0, 0.5f));
-        // 球类型按钮
-        CreateBallTypeButtons(parent, new Vector2(0, 0.4f));
+        // 形状类型按钮（只在运行时创建）
+        if (Application.isPlaying)
+        {
+            CreateShapeTypeButtons(parent, new Vector2(0, 0.5f));
+        }
+        // 球类型按钮（只在运行时创建）
+        if (Application.isPlaying)
+        {
+            CreateBallTypeButtons(parent, new Vector2(0, 0.4f));
+        }
         
         // 导入导出按钮
         GameObject importButton = UIComponentBuilder.CreateButton(parent, "导入关卡", new Vector2(0, 0.15f));

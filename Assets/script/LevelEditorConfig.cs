@@ -52,7 +52,16 @@ public class BackgroundConfig
         spritePath = path;
         if (!string.IsNullOrEmpty(path))
         {
-            backgroundSprite = LoadSpriteFromPath(path);
+            // 使用安全的加载方法，避免卡死
+            try
+            {
+                backgroundSprite = LoadSpriteFromPath(path);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"BackgroundConfig.SetSpritePath异常: {path}, 错误: {e.Message}");
+                backgroundSprite = null;
+            }
         }
     }
     
@@ -63,19 +72,27 @@ public class BackgroundConfig
     {
         if (string.IsNullOrEmpty(path)) return null;
         
-        // 尝试从Resources加载
-        string resourcePath = GetResourcePath(path);
-        if (!string.IsNullOrEmpty(resourcePath))
+        try
         {
-            return Resources.Load<Sprite>(resourcePath);
+            // 尝试从Resources加载
+            string resourcePath = GetResourcePath(path);
+            if (!string.IsNullOrEmpty(resourcePath))
+            {
+                return Resources.Load<Sprite>(resourcePath);
+            }
+            
+            // 尝试从AssetDatabase加载（仅在编辑器中）
+            #if UNITY_EDITOR
+            return UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            #else
+            return null;
+            #endif
         }
-        
-        // 尝试从AssetDatabase加载（仅在编辑器中）
-        #if UNITY_EDITOR
-        return UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
-        #else
-        return null;
-        #endif
+        catch (System.Exception e)
+        {
+            Debug.LogError($"BackgroundConfig.LoadSpriteFromPath异常: {path}, 错误: {e.Message}");
+            return null;
+        }
     }
     
     /// <summary>
@@ -309,7 +326,12 @@ public class LevelEditorConfig : ScriptableObject
                                 spriteScale = serializableBg.spriteScale,
                                 spriteOffset = serializableBg.spriteOffset
                             };
-                            bg.SetSpritePath(serializableBg.spritePath);
+                            // 安全加载背景精灵，避免卡死
+                            if (!string.IsNullOrEmpty(serializableBg.spritePath))
+                            {
+                                bg.spritePath = serializableBg.spritePath;
+                                bg.backgroundSprite = SafeLoadSpriteFromPath(serializableBg.spritePath);
+                            }
                             this.backgroundConfigs.Add(bg);
                         }
                     }
@@ -795,7 +817,8 @@ public class LevelEditorConfig : ScriptableObject
         {
             if (!string.IsNullOrEmpty(bg.spritePath))
             {
-                bg.SetSpritePath(bg.spritePath);
+                // 使用安全的加载方法，避免卡死
+                bg.backgroundSprite = SafeLoadSpriteFromPath(bg.spritePath);
             }
         }
     }

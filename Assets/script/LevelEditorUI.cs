@@ -68,6 +68,9 @@ public class LevelEditorUI : MonoBehaviour
     
     void Start()
     {
+        // 在运行时创建类型按钮
+        CreateTypeButtons();
+        
         // 在运行时自动绑定事件
         SetupEventListeners();
     }
@@ -417,6 +420,10 @@ public class LevelEditorUI : MonoBehaviour
                 }
             }
         }
+        else
+        {
+            Debug.LogWarning("形状类型按钮数组为空，跳过事件绑定");
+        }
         
         // 球类型按钮事件
         if (ballTypeButtons != null)
@@ -430,6 +437,10 @@ public class LevelEditorUI : MonoBehaviour
                     Debug.Log($"球类型按钮[{index}]事件绑定成功");
                 }
             }
+        }
+        else
+        {
+            Debug.LogWarning("球类型按钮数组为空，跳过事件绑定");
         }
     }
     
@@ -796,6 +807,170 @@ public class LevelEditorUI : MonoBehaviour
         else
         {
             Debug.LogWarning("ConfigPreviewUI组件未设置");
+        }
+    }
+    
+    /// <summary>
+    /// 在运行时创建形状类型和球类型按钮
+    /// </summary>
+    void CreateTypeButtons()
+    {
+        if (!Application.isPlaying)
+        {
+            Debug.LogWarning("CreateTypeButtons只能在运行时调用");
+            return;
+        }
+        
+        Debug.Log("开始创建类型按钮...");
+        
+        // 确保配置已加载
+        var config = LevelEditorConfig.Instance;
+        if (config == null)
+        {
+            Debug.LogError("无法获取配置实例，无法创建类型按钮");
+            return;
+        }
+        
+        // 创建形状类型按钮
+        CreateShapeTypeButtons();
+        
+        // 创建球类型按钮
+        CreateBallTypeButtons();
+        
+        Debug.Log("类型按钮创建完成");
+    }
+    
+    /// <summary>
+    /// 创建形状类型按钮
+    /// </summary>
+    void CreateShapeTypeButtons()
+    {
+        if (rightPanel == null)
+        {
+            Debug.LogError("右侧面板为空，无法创建形状类型按钮");
+            return;
+        }
+        
+        // 从配置中获取形状类型
+        var config = LevelEditorConfig.Instance;
+        string[] shapeTypes = config.GetShapeTypeNames();
+        Debug.Log($"创建 {shapeTypes.Length} 个形状类型按钮");
+        
+        shapeTypeButtons = new Button[shapeTypes.Length];
+        
+        for (int i = 0; i < shapeTypes.Length; i++)
+        {
+            // 创建按钮
+            GameObject buttonObj = new GameObject($"ShapeTypeButton_{i}");
+            buttonObj.transform.SetParent(rightPanel.transform, false);
+            
+            // 添加组件
+            RectTransform buttonRect = buttonObj.AddComponent<RectTransform>();
+            Image buttonImage = buttonObj.AddComponent<Image>();
+            Button button = buttonObj.AddComponent<Button>();
+            
+            // 设置按钮位置和大小
+            buttonRect.anchorMin = new Vector2(0.05f, 0.5f - (i * 0.03f));
+            buttonRect.anchorMax = new Vector2(0.45f, 0.53f - (i * 0.03f));
+            buttonRect.offsetMin = Vector2.zero;
+            buttonRect.offsetMax = Vector2.zero;
+            
+            // 设置按钮外观
+            buttonImage.color = new Color(0.4f, 0.4f, 0.4f, 1f);
+            
+            // 创建文本
+            GameObject textObj = new GameObject("Text");
+            textObj.transform.SetParent(buttonObj.transform, false);
+            
+            RectTransform textRect = textObj.AddComponent<RectTransform>();
+            Text text = textObj.AddComponent<Text>();
+            
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.offsetMin = Vector2.zero;
+            textRect.offsetMax = Vector2.zero;
+            
+            text.text = shapeTypes[i];
+            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            text.fontSize = 12;
+            text.color = Color.white;
+            text.alignment = TextAnchor.MiddleCenter;
+            
+            // 保存按钮引用
+            shapeTypeButtons[i] = button;
+        }
+        
+        // 设置默认选中状态
+        if (shapeTypeButtons.Length > 0)
+        {
+            UpdateShapeTypeButtonStates(currentShapeTypeIndex);
+        }
+    }
+    
+    /// <summary>
+    /// 创建球类型按钮
+    /// </summary>
+    void CreateBallTypeButtons()
+    {
+        if (rightPanel == null)
+        {
+            Debug.LogError("右侧面板为空，无法创建球类型按钮");
+            return;
+        }
+        
+        // 从配置中获取球类型
+        var config = LevelEditorConfig.Instance;
+        string[] ballTypes = config.GetBallTypeNames();
+        Debug.Log($"创建 {ballTypes.Length} 个球类型按钮");
+        
+        ballTypeButtons = new Button[ballTypes.Length];
+        
+        for (int i = 0; i < ballTypes.Length; i++)
+        {
+            // 创建按钮
+            GameObject buttonObj = new GameObject($"BallTypeButton_{i}");
+            buttonObj.transform.SetParent(rightPanel.transform, false);
+            
+            // 添加组件
+            RectTransform buttonRect = buttonObj.AddComponent<RectTransform>();
+            Image buttonImage = buttonObj.AddComponent<Image>();
+            Button button = buttonObj.AddComponent<Button>();
+            
+            // 设置按钮位置和大小
+            buttonRect.anchorMin = new Vector2(0.55f, 0.5f - (i * 0.03f));
+            buttonRect.anchorMax = new Vector2(0.95f, 0.53f - (i * 0.03f));
+            buttonRect.offsetMin = Vector2.zero;
+            buttonRect.offsetMax = Vector2.zero;
+            
+            // 设置按钮外观
+            buttonImage.color = new Color(0.4f, 0.4f, 0.4f, 1f);
+            
+            // 创建文本
+            GameObject textObj = new GameObject("Text");
+            textObj.transform.SetParent(buttonObj.transform, false);
+            
+            RectTransform textRect = textObj.AddComponent<RectTransform>();
+            Text text = textObj.AddComponent<Text>();
+            
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.offsetMin = Vector2.zero;
+            textRect.offsetMax = Vector2.zero;
+            
+            text.text = ballTypes[i];
+            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            text.fontSize = 12;
+            text.color = Color.white;
+            text.alignment = TextAnchor.MiddleCenter;
+            
+            // 保存按钮引用
+            ballTypeButtons[i] = button;
+        }
+        
+        // 设置默认选中状态
+        if (ballTypeButtons.Length > 0)
+        {
+            UpdateBallTypeButtonStates(currentBallTypeIndex);
         }
     }
     
