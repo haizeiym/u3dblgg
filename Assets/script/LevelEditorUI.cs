@@ -72,6 +72,12 @@ public class LevelEditorUI : MonoBehaviour
     
     void Start()
     {
+        // 在运行时初始化关卡名称
+        if (Application.isPlaying)
+        {
+            InitializeDefaultData();
+        }
+        
         // 在运行时创建类型按钮
         CreateTypeButtons();
         
@@ -791,6 +797,20 @@ public class LevelEditorUI : MonoBehaviour
             int defaultIndex = LevelEditorConfig.Instance.GetLevelIndex();
             string defaultLevelName = $"LevelConfig_{defaultIndex}";
             currentLevel = new LevelData(defaultLevelName);
+        }
+        else
+        {
+            // 如果关卡已存在，但在运行时，也要确保关卡名称使用正确的格式
+            if (Application.isPlaying)
+            {
+                int defaultIndex = LevelEditorConfig.Instance.GetLevelIndex();
+                string correctLevelName = $"LevelConfig_{defaultIndex}";
+                if (currentLevel.levelName != correctLevelName)
+                {
+                    currentLevel.levelName = correctLevelName;
+                    Debug.Log($"运行时更新关卡名称: {correctLevelName}");
+                }
+            }
         }
         
         // 确保至少有一个层级

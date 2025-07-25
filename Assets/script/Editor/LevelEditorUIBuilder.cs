@@ -54,6 +54,9 @@ public class LevelEditorUIBuilder
     {
         Debug.Log("开始创建UI结构...");
         
+        // 确保配置已加载
+        EnsureConfigLoaded();
+        
         CreateLeftPanel();
         CreateCenterPanel();
         CreateRightPanel();
@@ -197,7 +200,10 @@ public class LevelEditorUIBuilder
         levelNameInputBg.color = new Color(0.2f, 0.2f, 0.2f, 1f);
         
         InputField levelNameInputComponent = levelNameInputObj.AddComponent<InputField>();
-        levelNameInputComponent.text = "新关卡";
+        // 使用配置中的索引设置默认关卡名称
+        int defaultIndex = LevelEditorConfig.Instance.GetLevelIndex();
+        string defaultLevelName = $"LevelConfig_{defaultIndex}";
+        levelNameInputComponent.text = defaultLevelName;
         
         levelEditor.levelNameInput = levelNameInputComponent;
         
@@ -212,7 +218,7 @@ public class LevelEditorUIBuilder
         levelNameTextRect.offsetMax = new Vector2(-5, 0);
         
         Text levelNameTextComponent = levelNameTextObj.AddComponent<Text>();
-        levelNameTextComponent.text = "新关卡";
+        levelNameTextComponent.text = defaultLevelName;
         levelNameTextComponent.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
         levelNameTextComponent.fontSize = 16;
         levelNameTextComponent.color = Color.white;

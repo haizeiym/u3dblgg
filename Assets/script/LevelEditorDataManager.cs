@@ -28,7 +28,25 @@ public class LevelEditorDataManager
         if (editorUI.currentLevel == null)
         {
             Debug.Log("创建新关卡");
-            editorUI.currentLevel = new LevelData("新关卡");
+            // 使用配置中的索引创建关卡名称
+            int defaultIndex = LevelEditorConfig.Instance.GetLevelIndex();
+            string defaultLevelName = $"LevelConfig_{defaultIndex}";
+            editorUI.currentLevel = new LevelData(defaultLevelName);
+            Debug.Log($"使用配置索引创建关卡: {defaultLevelName}");
+        }
+        else
+        {
+            // 如果关卡已存在，但在运行时，也要确保关卡名称使用正确的格式
+            if (Application.isPlaying)
+            {
+                int defaultIndex = LevelEditorConfig.Instance.GetLevelIndex();
+                string correctLevelName = $"LevelConfig_{defaultIndex}";
+                if (editorUI.currentLevel.levelName != correctLevelName)
+                {
+                    editorUI.currentLevel.levelName = correctLevelName;
+                    Debug.Log($"运行时更新关卡名称: {correctLevelName}");
+                }
+            }
         }
         
         // 确保至少有一个层级
@@ -46,6 +64,12 @@ public class LevelEditorDataManager
         }
         
         Debug.Log($"初始化完成 - 关卡: {editorUI.currentLevel.levelName}, 层级数量: {editorUI.currentLevel.layers.Count}, 当前层级: {editorUI.currentLayer?.layerName}");
+        
+        // 在运行时更新UI显示
+        if (Application.isPlaying)
+        {
+            UpdateLevelNameInUI(editorUI.currentLevel.levelName);
+        }
     }
     
     public void AddLayer()
@@ -497,10 +521,22 @@ public class LevelEditorDataManager
         }
         else
         {
-            // 生成文件名（使用时间戳避免重复）
-            string timestamp = System.DateTime.Now.ToString("yyyyMMdd_HHmmss");
-            string fileName = $"Level_{timestamp}.json";
+            // 使用关卡名称生成文件名
+            string levelName = editorUI.currentLevel.levelName;
+            // 清理文件名中的非法字符
+            string safeFileName = System.Text.RegularExpressions.Regex.Replace(levelName, @"[<>:""/\\|?*]", "_");
+            string fileName = $"{safeFileName}.json";
             filePath = System.IO.Path.Combine(savedLevelsPath, fileName);
+            
+            // 检查文件是否已存在，如果存在则添加数字后缀
+            int counter = 1;
+            while (System.IO.File.Exists(filePath))
+            {
+                fileName = $"{safeFileName}_{counter}.json";
+                filePath = System.IO.Path.Combine(savedLevelsPath, fileName);
+                counter++;
+            }
+            
             currentLevelFilePath = filePath; // 记录新文件路径
             Debug.Log($"创建新文件: {filePath}");
         }
@@ -532,12 +568,38 @@ public class LevelEditorDataManager
             return;
         }
         
-        // 选择最新的文件（按修改时间排序）
-        System.Array.Sort(jsonFiles, (a, b) => 
-            System.IO.File.GetLastWriteTime(b).CompareTo(System.IO.File.GetLastWriteTime(a)));
+        string targetFile = null;
         
-        string latestFile = jsonFiles[0];
-        string jsonContent = System.IO.File.ReadAllText(latestFile);
+        // 优先根据当前关卡名称查找文件
+        if (editorUI.currentLevel != null && !string.IsNullOrEmpty(editorUI.currentLevel.levelName))
+        {
+            string levelName = editorUI.currentLevel.levelName;
+            string safeFileName = System.Text.RegularExpressions.Regex.Replace(levelName, @"[<>:""/\\|?*]", "_");
+            
+            // 查找匹配的文件（包括带数字后缀的文件）
+            foreach (string file in jsonFiles)
+            {
+                string fileName = System.IO.Path.GetFileNameWithoutExtension(file);
+                if (fileName == safeFileName || fileName.StartsWith(safeFileName + "_"))
+                {
+                    targetFile = file;
+                    Debug.Log($"找到匹配的关卡文件: {System.IO.Path.GetFileName(file)}");
+                    break;
+                }
+            }
+        }
+        
+        // 如果没有找到匹配的文件，选择最新的文件
+        if (targetFile == null)
+        {
+            // 选择最新的文件（按修改时间排序）
+            System.Array.Sort(jsonFiles, (a, b) => 
+                System.IO.File.GetLastWriteTime(b).CompareTo(System.IO.File.GetLastWriteTime(a)));
+            targetFile = jsonFiles[0];
+            Debug.Log($"未找到匹配的关卡文件，使用最新文件: {System.IO.Path.GetFileName(targetFile)}");
+        }
+        
+        string jsonContent = System.IO.File.ReadAllText(targetFile);
         
         try
         {
@@ -546,7 +608,7 @@ public class LevelEditorDataManager
             if (importedLevel != null)
             {
                 editorUI.currentLevel = importedLevel;
-                currentLevelFilePath = latestFile; // 记录文件路径
+                currentLevelFilePath = targetFile; // 记录文件路径
                 if (importedLevel.layers.Count > 0)
                 {
                     editorUI.currentLayer = importedLevel.layers[0];
@@ -559,7 +621,9 @@ public class LevelEditorDataManager
                 }
                 
                 editorUI.RefreshUI();
-                Debug.Log($"成功导入关卡（递增ID格式）: {System.IO.Path.GetFileName(latestFile)}");
+                // 更新UI中的关卡名称显示
+                UpdateLevelNameInUI(importedLevel.levelName);
+                Debug.Log($"成功导入关卡（递增ID格式）: {System.IO.Path.GetFileName(targetFile)}");
             }
             else
             {
@@ -569,7 +633,7 @@ public class LevelEditorDataManager
                 if (importedLevel != null)
                 {
                     editorUI.currentLevel = importedLevel;
-                    currentLevelFilePath = latestFile;
+                    currentLevelFilePath = targetFile;
                     if (importedLevel.layers.Count > 0)
                     {
                         editorUI.currentLayer = importedLevel.layers[0];
@@ -581,7 +645,9 @@ public class LevelEditorDataManager
                     }
                     
                     editorUI.RefreshUI();
-                    Debug.Log($"成功导入关卡（原始格式）: {System.IO.Path.GetFileName(latestFile)}");
+                    // 更新UI中的关卡名称显示
+                    UpdateLevelNameInUI(importedLevel.levelName);
+                    Debug.Log($"成功导入关卡（原始格式）: {System.IO.Path.GetFileName(targetFile)}");
                 }
             }
         }
