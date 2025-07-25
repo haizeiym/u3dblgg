@@ -108,5 +108,6 @@
             }
         }
     ],
-    "currentBackgroundIndex": 0
+    "currentBackgroundIndex": 0,
+    "levelIndex": 4
 }

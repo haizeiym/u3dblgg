@@ -78,8 +78,11 @@ public class LevelEditorDataManager
     {
         Debug.Log("开始创建新关卡");
         
-        // 创建新关卡
-        string newLevelName = $"新关卡_{System.DateTime.Now:yyyyMMdd_HHmmss}";
+        // 从配置中获取并增加关卡索引
+        int newIndex = LevelEditorConfig.Instance.IncrementLevelIndex();
+        
+        // 创建新关卡名称
+        string newLevelName = $"LevelConfig_{newIndex}";
         LevelData newLevel = new LevelData(newLevelName);
         
         // 创建默认层级
@@ -102,7 +105,7 @@ public class LevelEditorDataManager
         // 刷新UI
         editorUI.RefreshUI();
         
-        Debug.Log($"新关卡已创建: {newLevelName}");
+        Debug.Log($"新关卡已创建: {newLevelName} (索引: {newIndex})");
     }
     
     public void UpdateLevelName(string newName)

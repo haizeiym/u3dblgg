@@ -154,6 +154,7 @@ public class LevelEditorConfig : ScriptableObject
     public List<BallType> ballTypes = new List<BallType>();
     public List<BackgroundConfig> backgroundConfigs = new List<BackgroundConfig>();
     public int currentBackgroundIndex = 0;
+    public int levelIndex = 1; // 新增：关卡索引，初始值为1
     
     // 配置变更事件
     public event Action OnShapeTypesChanged;
@@ -198,6 +199,7 @@ public class LevelEditorConfig : ScriptableObject
         public List<SerializableBallType> ballTypes;
         public List<SerializableBackgroundConfig> backgroundConfigs;
         public int currentBackgroundIndex;
+        public int levelIndex = 1; // 新增：关卡索引，初始值为1
     }
 
     public void SaveConfigToFile()
@@ -248,7 +250,8 @@ public class LevelEditorConfig : ScriptableObject
             shapeTypes = serializableShapes,
             ballTypes = serializableBalls,
             backgroundConfigs = serializableBackgrounds,
-            currentBackgroundIndex = this.currentBackgroundIndex
+            currentBackgroundIndex = this.currentBackgroundIndex,
+            levelIndex = this.levelIndex
         };
         string json = JsonUtility.ToJson(data, true);
         File.WriteAllText(ConfigPath, json);
@@ -337,6 +340,7 @@ public class LevelEditorConfig : ScriptableObject
                     }
                     
                     this.currentBackgroundIndex = data.currentBackgroundIndex;
+                    this.levelIndex = data.levelIndex; // 新增：加载关卡索引
                     Debug.Log("配置已从文件加载: " + ConfigPath);
                     
                     // 检查配置是否为空，如果为空则初始化默认配置（不保存，避免循环）
@@ -829,5 +833,41 @@ public class LevelEditorConfig : ScriptableObject
     public void TriggerConfigReloaded()
     {
         OnConfigReloaded?.Invoke();
+    }
+    
+    /// <summary>
+    /// 获取当前关卡索引
+    /// </summary>
+    public int GetLevelIndex()
+    {
+        return levelIndex;
+    }
+    
+    /// <summary>
+    /// 增加关卡索引并保存配置
+    /// </summary>
+    public int IncrementLevelIndex()
+    {
+        levelIndex++;
+        SaveConfigToFile();
+        Debug.Log($"关卡索引已增加到: {levelIndex}");
+        return levelIndex;
+    }
+    
+    /// <summary>
+    /// 设置关卡索引
+    /// </summary>
+    public void SetLevelIndex(int index)
+    {
+        if (index >= 1)
+        {
+            levelIndex = index;
+            SaveConfigToFile();
+            Debug.Log($"关卡索引已设置为: {levelIndex}");
+        }
+        else
+        {
+            Debug.LogWarning($"关卡索引不能小于1，当前值: {index}");
+        }
     }
 }

@@ -787,7 +787,10 @@ public class LevelEditorUI : MonoBehaviour
         // 如果没有初始化数据，创建默认数据
         if (currentLevel == null)
         {
-            currentLevel = new LevelData("新关卡");
+            // 使用配置中的索引创建默认关卡名称
+            int defaultIndex = LevelEditorConfig.Instance.GetLevelIndex();
+            string defaultLevelName = $"LevelConfig_{defaultIndex}";
+            currentLevel = new LevelData(defaultLevelName);
         }
         
         // 确保至少有一个层级
