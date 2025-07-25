@@ -16,27 +16,53 @@ public class LevelEditorConfigWindow : EditorWindow
 
     void OnGUI()
     {
-        scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
+        try
+        {
+            scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
 
-        EditorGUILayout.LabelField("关卡编辑器配置", EditorStyles.boldLabel);
-        EditorGUILayout.Space();
+            EditorGUILayout.LabelField("关卡编辑器配置", EditorStyles.boldLabel);
+            EditorGUILayout.Space();
 
-        showShapeTypes = EditorGUILayout.Foldout(showShapeTypes, "形状类型配置");
-        if (showShapeTypes) DrawShapeTypeConfig();
+            showShapeTypes = EditorGUILayout.Foldout(showShapeTypes, "形状类型配置");
+            if (showShapeTypes) DrawShapeTypeConfig();
 
-        EditorGUILayout.Space();
+            EditorGUILayout.Space();
 
-        showBallTypes = EditorGUILayout.Foldout(showBallTypes, "球类型配置");
-        if (showBallTypes) DrawBallTypeConfig();
+            showBallTypes = EditorGUILayout.Foldout(showBallTypes, "球类型配置");
+            if (showBallTypes) DrawBallTypeConfig();
 
-        EditorGUILayout.Space();
+            EditorGUILayout.Space();
 
-        showBackgroundConfigs = EditorGUILayout.Foldout(showBackgroundConfigs, "背景配置");
-        if (showBackgroundConfigs) DrawBackgroundConfig();
+            showBackgroundConfigs = EditorGUILayout.Foldout(showBackgroundConfigs, "背景配置");
+            if (showBackgroundConfigs) DrawBackgroundConfig();
 
-        DrawActionButtons();
+            DrawActionButtons();
 
-        EditorGUILayout.EndScrollView();
+            EditorGUILayout.EndScrollView();
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"LevelEditorConfigWindow OnGUI Error: {e.Message}");
+            
+            // 确保所有布局组都被正确关闭
+            try
+            {
+                EditorGUILayout.EndScrollView();
+            }
+            catch { }
+            try
+            {
+                EditorGUILayout.EndVertical();
+            }
+            catch { }
+            try
+            {
+                EditorGUILayout.EndHorizontal();
+            }
+            catch { }
+            
+            EditorGUILayout.HelpBox($"界面渲染错误: {e.Message}", MessageType.Error);
+        }
     }
 
     void DrawShapeTypeConfig()
@@ -69,7 +95,7 @@ public class LevelEditorConfigWindow : EditorWindow
                 config.TriggerShapeTypesChanged();
                 // 强制重绘窗口
                 Repaint();
-                return; // 安全退出，避免继续处理已删除的项目
+                break; // 使用break而不是return，避免布局组不匹配
             }
         }
         
@@ -112,7 +138,7 @@ public class LevelEditorConfigWindow : EditorWindow
                 config.TriggerBallTypesChanged();
                 // 强制重绘窗口
                 Repaint();
-                return; // 安全退出，避免继续处理已删除的项目
+                break; // 使用break而不是return，避免布局组不匹配
             }
         }
         
@@ -184,7 +210,7 @@ public class LevelEditorConfigWindow : EditorWindow
                 config.TriggerBackgroundConfigsChanged();
                 // 强制重绘窗口
                 Repaint();
-                return; // 安全退出，避免继续处理已删除的项目
+                break; // 使用break而不是return，避免布局组不匹配
             }
         }
         

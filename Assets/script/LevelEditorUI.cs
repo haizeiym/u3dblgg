@@ -23,6 +23,8 @@ public class LevelEditorUI : MonoBehaviour
     public Image editAreaBackground; // 新增：编辑区背景
     public Button addShapeButton;
     public Button addBallButton;
+    public Button deleteShapeButton; // 新增：删除形状按钮
+    public Button deleteBallButton; // 新增：删除球按钮
     public Button backgroundButton; // 新增：背景切换按钮
     public Button previewButton; // 新增：预览按钮
     
@@ -207,6 +209,18 @@ public class LevelEditorUI : MonoBehaviour
             allComponentsExist = false;
         }
         
+        if (deleteShapeButton == null)
+        {
+            Debug.LogWarning("删除形状按钮未创建");
+            allComponentsExist = false;
+        }
+        
+        if (deleteBallButton == null)
+        {
+            Debug.LogWarning("删除球按钮未创建");
+            allComponentsExist = false;
+        }
+        
         if (exportButton == null)
         {
             Debug.LogWarning("导出按钮未创建");
@@ -335,6 +349,26 @@ public class LevelEditorUI : MonoBehaviour
         else
         {
             Debug.LogError("添加球按钮为空");
+        }
+        
+        if (deleteShapeButton != null)
+        {
+            deleteShapeButton.onClick.AddListener(OnDeleteShapeClicked);
+            Debug.Log("删除形状按钮事件绑定成功");
+        }
+        else
+        {
+            Debug.LogError("删除形状按钮为空");
+        }
+        
+        if (deleteBallButton != null)
+        {
+            deleteBallButton.onClick.AddListener(OnDeleteBallClicked);
+            Debug.Log("删除球按钮事件绑定成功");
+        }
+        else
+        {
+            Debug.LogError("删除球按钮为空");
         }
         
         if (backgroundButton != null)
@@ -499,6 +533,62 @@ public class LevelEditorUI : MonoBehaviour
         catch (System.Exception e)
         {
             Debug.LogError($"添加球时发生异常: {e.Message}");
+            Debug.LogError($"异常堆栈: {e.StackTrace}");
+        }
+    }
+    
+    void OnDeleteShapeClicked()
+    {
+        Debug.Log("删除形状按钮被点击！");
+        
+        if (selectedShape == null)
+        {
+            Debug.LogWarning("没有选中的形状，无法删除");
+            return;
+        }
+        
+        if (dataManager == null)
+        {
+            Debug.LogError("dataManager为空，无法删除形状");
+            return;
+        }
+        
+        try
+        {
+            DeleteShape();
+            Debug.Log("删除形状操作完成");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"删除形状时发生异常: {e.Message}");
+            Debug.LogError($"异常堆栈: {e.StackTrace}");
+        }
+    }
+    
+    void OnDeleteBallClicked()
+    {
+        Debug.Log("删除球按钮被点击！");
+        
+        if (selectedBall == null)
+        {
+            Debug.LogWarning("没有选中的球，无法删除");
+            return;
+        }
+        
+        if (dataManager == null)
+        {
+            Debug.LogError("dataManager为空，无法删除球");
+            return;
+        }
+        
+        try
+        {
+            DeleteBall();
+            Debug.Log("删除球操作完成");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"删除球时发生异常: {e.Message}");
             Debug.LogError($"异常堆栈: {e.StackTrace}");
         }
     }
@@ -728,6 +818,16 @@ public class LevelEditorUI : MonoBehaviour
     public void AddBall()
     {
         if (dataManager != null) dataManager.AddBall();
+    }
+    
+    public void DeleteShape()
+    {
+        if (dataManager != null) dataManager.DeleteShape();
+    }
+    
+    public void DeleteBall()
+    {
+        if (dataManager != null) dataManager.DeleteBall();
     }
     
     public void ExportLevel()

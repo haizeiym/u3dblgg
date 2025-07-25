@@ -261,6 +261,13 @@ public class ShapeController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         return shapeData;
     }
     
+    // 添加公共属性以便外部访问
+    public ShapeData ShapeData
+    {
+        get { return shapeData; }
+        set { shapeData = value; }
+    }
+    
     public void UpdateVisual()
     {
         if (shapeData != null && rectTransform != null)

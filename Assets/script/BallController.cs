@@ -261,4 +261,11 @@ public class BallController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     {
         return ballData;
     }
+    
+    // 添加公共属性以便外部访问
+    public BallData BallData
+    {
+        get { return ballData; }
+        set { ballData = value; }
+    }
 } 

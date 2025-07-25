@@ -110,6 +110,19 @@ public class PackageExporter : EditorWindow
         catch (System.Exception e)
         {
             Debug.LogError($"PackageExporter OnGUI Error: {e.Message}");
+            
+            // 确保所有布局组都被正确关闭
+            try
+            {
+                EditorGUILayout.EndVertical();
+            }
+            catch { }
+            try
+            {
+                EditorGUILayout.EndHorizontal();
+            }
+            catch { }
+            
             EditorGUILayout.HelpBox($"界面渲染错误: {e.Message}", MessageType.Error);
         }
     }

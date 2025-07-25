@@ -185,7 +185,7 @@ public class LevelEditorDataManager
     
     public void AddBall()
     {
-        Debug.Log($"开始添加球，当前层级: {editorUI.currentLayer?.layerName}, 选中形状: {editorUI.selectedShape?.name}");
+        Debug.Log($"开始添加球，当前层级: {editorUI.currentLayer?.layerName}");
         
         // 检查层级状态
         if (editorUI.currentLayer == null)
@@ -200,7 +200,14 @@ public class LevelEditorDataManager
             return;
         }
         
-        // 检查球类型配置（不强制重新加载，避免循环）
+        // 检查是否有选中的形状
+        if (editorUI.selectedShape == null)
+        {
+            Debug.LogWarning("无法添加球：请先选中一个形状");
+            return;
+        }
+        
+        // 检查球类型配置
         var config = LevelEditorConfig.Instance;
         if (config == null)
         {
@@ -208,82 +215,141 @@ public class LevelEditorDataManager
             return;
         }
         
-        string[] ballTypes = config.GetBallTypeNames();
-        if (ballTypes.Length == 0)
+        if (config.ballTypes.Count == 0)
         {
-            Debug.LogWarning("没有配置的球类型！请先配置球类型。");
-            // 不显示对话框，避免UI卡死
-            Debug.LogError("请打开 Tools/Level Editor/配置编辑器 添加球类型");
+            ShowConfigWarning("球类型", "请先在配置编辑器中添加球类型");
             return;
         }
         
-        // 使用当前选中的球类型索引
-        string ballType = "红球"; // 默认值
-        if (editorUI.currentBallTypeIndex >= 0 && editorUI.currentBallTypeIndex < ballTypes.Length)
+        // 获取当前选中的球类型
+        int ballTypeIndex = editorUI.currentBallTypeIndex;
+        if (ballTypeIndex >= config.ballTypes.Count)
         {
-            ballType = ballTypes[editorUI.currentBallTypeIndex];
+            ballTypeIndex = 0; // 默认使用第一个球类型
         }
         
-        // 验证配置中的球类型
-        BallType ballConfig = LevelEditorConfig.Instance.GetBallConfig(ballType);
-        if (ballConfig == null)
+        var ballType = config.ballTypes[ballTypeIndex];
+        Debug.Log($"使用球类型: {ballType.name} (索引: {ballTypeIndex})");
+        
+        // 创建球数据
+        BallData newBall = new BallData(ballType.name, Vector2.zero);
+        
+        // 添加到选中的形状中
+        ShapeData selectedShapeData = editorUI.selectedShape.ShapeData;
+        selectedShapeData.balls.Add(newBall);
+        
+        Debug.Log($"球已添加到形状 '{selectedShapeData.shapeType}' 中，球数量: {selectedShapeData.balls.Count}");
+        
+        // 刷新UI
+        editorUI.RefreshUI();
+    }
+    
+    public void DeleteShape()
+    {
+        Debug.Log("开始删除形状");
+        
+        if (editorUI.selectedShape == null)
         {
-            Debug.LogWarning($"配置中未找到球类型: {ballType}");
+            Debug.LogWarning("没有选中的形状，无法删除");
             return;
         }
         
-        // 如果有选中的形状，将球添加到形状中
-        if (editorUI.selectedShape != null)
+        // 检查层级状态
+        if (editorUI.currentLayer == null)
         {
-            ShapeData shapeData = editorUI.selectedShape.GetShapeData();
-            if (shapeData != null)
+            Debug.LogWarning("当前没有可用的层级");
+            return;
+        }
+        
+        if (!editorUI.currentLayer.isActive)
+        {
+            Debug.LogWarning("无法删除形状：当前层级未激活，请先激活该层级");
+            return;
+        }
+        
+        // 获取选中的形状数据
+        ShapeData shapeToDelete = editorUI.selectedShape.ShapeData;
+        
+        // 从当前层级中删除形状（包括其关联的所有球）
+        bool removed = editorUI.currentLayer.shapes.Remove(shapeToDelete);
+        
+        if (removed)
+        {
+            Debug.Log($"形状 '{shapeToDelete.shapeType}' 及其关联的 {shapeToDelete.balls.Count} 个球已删除");
+            
+            // 清除选中状态
+            editorUI.selectedShape = null;
+            editorUI.selectedBall = null;
+            
+            // 刷新UI
+            editorUI.RefreshUI();
+        }
+        else
+        {
+            Debug.LogError("删除形状失败：未找到要删除的形状");
+        }
+    }
+    
+    public void DeleteBall()
+    {
+        Debug.Log("开始删除球");
+        
+        if (editorUI.selectedBall == null)
+        {
+            Debug.LogWarning("没有选中的球，无法删除");
+            return;
+        }
+        
+        // 检查层级状态
+        if (editorUI.currentLayer == null)
+        {
+            Debug.LogWarning("当前没有可用的层级");
+            return;
+        }
+        
+        if (!editorUI.currentLayer.isActive)
+        {
+            Debug.LogWarning("无法删除球：当前层级未激活，请先激活该层级");
+            return;
+        }
+        
+        // 获取选中的球数据
+        BallData ballToDelete = editorUI.selectedBall.BallData;
+        
+        // 查找包含该球的形状
+        ShapeData parentShape = null;
+        foreach (var shape in editorUI.currentLayer.shapes)
+        {
+            if (shape.balls.Contains(ballToDelete))
             {
-                BallData newBall = new BallData(ballType, Vector2.zero);
-                shapeData.balls.Add(newBall);
+                parentShape = shape;
+                break;
+            }
+        }
+        
+        if (parentShape != null)
+        {
+            // 从形状中删除球
+            bool removed = parentShape.balls.Remove(ballToDelete);
+            
+            if (removed)
+            {
+                Debug.Log($"球已从形状 '{parentShape.shapeType}' 中删除");
                 
-                Debug.Log($"使用配置球类型: {ballType} (配置名称: {ballConfig.name}, 颜色: {ballConfig.color})");
+                // 清除选中状态
+                editorUI.selectedBall = null;
                 
-                // 将球创建在选中的形状内部
-                GameObject ballObj = uiManager.CreateBallObject(newBall);
-                if (ballObj != null)
-                {
-                    // 将球设置为形状的子对象
-                    ballObj.transform.SetParent(editorUI.selectedShape.transform, false);
-                    
-                    Debug.Log($"成功添加球到形状: {shapeData.shapeType}，球类型: {ballType}，使用配置设置");
-                }
-                else
-                {
-                    Debug.LogError("创建球对象失败");
-                }
+                // 刷新UI
+                editorUI.RefreshUI();
+            }
+            else
+            {
+                Debug.LogError("删除球失败：未找到要删除的球");
             }
         }
         else
         {
-            // 如果没有选中的形状，创建一个独立的球（添加到当前层级的默认位置）
-            Debug.Log("没有选中形状，创建独立球");
-            
-            // 创建一个临时的形状数据来容纳球
-            ShapeData tempShapeData = new ShapeData("临时形状", Vector2.zero, 0f);
-            BallData newBall = new BallData(ballType, Vector2.zero);
-            tempShapeData.balls.Add(newBall);
-            
-            // 将临时形状添加到当前层级
-            editorUI.currentLayer.shapes.Add(tempShapeData);
-            
-            // 创建球对象
-            GameObject ballObj = uiManager.CreateBallObject(newBall);
-            if (ballObj != null)
-            {
-                // 将球添加到编辑区
-                ballObj.transform.SetParent(editorUI.editAreaContent, false);
-                
-                Debug.Log($"成功创建独立球，球类型: {ballType}，使用配置设置");
-            }
-            else
-            {
-                Debug.LogError("创建球对象失败");
-            }
+            Debug.LogError("删除球失败：未找到包含该球的形状");
         }
     }
     

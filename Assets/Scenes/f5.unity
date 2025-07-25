@@ -643,6 +643,38 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1993176118268156104, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
+      propertyPath: m_RootOrder
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1993176118268156104, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: -58.7579
+      objectReference: {fileID: 0}
+    - target: {fileID: 1993176118268156104, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 278
+      objectReference: {fileID: 0}
+    - target: {fileID: 1993176118268156104, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 62
+      objectReference: {fileID: 0}
+    - target: {fileID: 1993176118407852319, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
+      propertyPath: m_RootOrder
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1993176118407852319, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: -58.7579
+      objectReference: {fileID: 0}
+    - target: {fileID: 1993176118407852319, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 172.379
+      objectReference: {fileID: 0}
+    - target: {fileID: 1993176118407852319, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 62.000053
+      objectReference: {fileID: 0}
     - target: {fileID: 1993176118452586225, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
       propertyPath: ballPrefab
       value: 
@@ -651,6 +683,14 @@ PrefabInstance:
       propertyPath: shapePrefab
       value: 
       objectReference: {fileID: 951800892}
+    - target: {fileID: 1993176118452586225, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
+      propertyPath: deleteBallButton
+      value: 
+      objectReference: {fileID: 1993176118136680340}
+    - target: {fileID: 1993176118452586225, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
+      propertyPath: deleteShapeButton
+      value: 
+      objectReference: {fileID: 1993176118136680341}
     - target: {fileID: 1993176118579858891, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
       propertyPath: m_Name
       value: LevelEditorCanvas
@@ -751,5 +791,35 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2767170822091124753, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
+      propertyPath: m_RootOrder
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4650598274317507075, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
+      propertyPath: m_RootOrder
+      value: 6
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
+--- !u!114 &1993176118136680340 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7669254825795561876, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
+  m_PrefabInstance: {fileID: 1993176118136680339}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1993176118136680341 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7100329215876593356, guid: ca6e9997b980d41b68a6da490cec8230, type: 3}
+  m_PrefabInstance: {fileID: 1993176118136680339}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

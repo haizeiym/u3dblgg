@@ -23,38 +23,64 @@ public class LevelEditorPreviewWindow : EditorWindow
 
     void OnGUI()
     {
-        scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
+        try
+        {
+            scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
 
-        EditorGUILayout.LabelField("配置预览", EditorStyles.boldLabel);
-        EditorGUILayout.Space();
+            EditorGUILayout.LabelField("配置预览", EditorStyles.boldLabel);
+            EditorGUILayout.Space();
 
-        // 预览设置
-        EditorGUILayout.BeginVertical("box");
-        EditorGUILayout.LabelField("预览设置", EditorStyles.boldLabel);
-        previewSize = EditorGUILayout.Slider("预览大小", previewSize, 50f, 200f);
-        gridSize.x = EditorGUILayout.IntSlider("网格列数", (int)gridSize.x, 2, 8);
-        gridSize.y = EditorGUILayout.IntSlider("网格行数", (int)gridSize.y, 2, 8);
-        EditorGUILayout.EndVertical();
+            // 预览设置
+            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.LabelField("预览设置", EditorStyles.boldLabel);
+            previewSize = EditorGUILayout.Slider("预览大小", previewSize, 50f, 200f);
+            gridSize.x = EditorGUILayout.IntSlider("网格列数", (int)gridSize.x, 2, 8);
+            gridSize.y = EditorGUILayout.IntSlider("网格行数", (int)gridSize.y, 2, 8);
+            EditorGUILayout.EndVertical();
 
-        EditorGUILayout.Space();
+            EditorGUILayout.Space();
 
-        // 形状预览
-        showShapes = EditorGUILayout.Foldout(showShapes, $"形状类型预览 ({LevelEditorConfig.Instance?.shapeTypes.Count ?? 0})");
-        if (showShapes) DrawShapePreview();
+            // 形状预览
+            showShapes = EditorGUILayout.Foldout(showShapes, $"形状类型预览 ({LevelEditorConfig.Instance?.shapeTypes.Count ?? 0})");
+            if (showShapes) DrawShapePreview();
 
-        EditorGUILayout.Space();
+            EditorGUILayout.Space();
 
-        // 球预览
-        showBalls = EditorGUILayout.Foldout(showBalls, $"球类型预览 ({LevelEditorConfig.Instance?.ballTypes.Count ?? 0})");
-        if (showBalls) DrawBallPreview();
+            // 球预览
+            showBalls = EditorGUILayout.Foldout(showBalls, $"球类型预览 ({LevelEditorConfig.Instance?.ballTypes.Count ?? 0})");
+            if (showBalls) DrawBallPreview();
 
-        EditorGUILayout.Space();
+            EditorGUILayout.Space();
 
-        // 背景预览
-        showBackgrounds = EditorGUILayout.Foldout(showBackgrounds, $"背景预览 ({LevelEditorConfig.Instance?.backgroundConfigs.Count ?? 0})");
-        if (showBackgrounds) DrawBackgroundPreview();
+            // 背景预览
+            showBackgrounds = EditorGUILayout.Foldout(showBackgrounds, $"背景预览 ({LevelEditorConfig.Instance?.backgroundConfigs.Count ?? 0})");
+            if (showBackgrounds) DrawBackgroundPreview();
 
-        EditorGUILayout.EndScrollView();
+            EditorGUILayout.EndScrollView();
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"LevelEditorPreviewWindow OnGUI Error: {e.Message}");
+            
+            // 确保所有布局组都被正确关闭
+            try
+            {
+                EditorGUILayout.EndScrollView();
+            }
+            catch { }
+            try
+            {
+                EditorGUILayout.EndVertical();
+            }
+            catch { }
+            try
+            {
+                EditorGUILayout.EndHorizontal();
+            }
+            catch { }
+            
+            EditorGUILayout.HelpBox($"界面渲染错误: {e.Message}", MessageType.Error);
+        }
     }
 
     void DrawShapePreview()

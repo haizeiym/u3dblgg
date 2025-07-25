@@ -234,18 +234,24 @@ public class LevelEditorUIBuilder
         Image toolbarBg = toolbar.AddComponent<Image>();
         toolbarBg.color = new Color(0.3f, 0.3f, 0.3f, 0.8f);
         
-        GameObject addShapeButton = UIComponentBuilder.CreateButton(toolbar, "添加形状", new Vector2(0.1f, 0));
+        GameObject addShapeButton = UIComponentBuilder.CreateButton(toolbar, "添加形状", new Vector2(0.05f, 0));
         levelEditor.addShapeButton = addShapeButton.GetComponent<Button>();
         
-        GameObject addBallButton = UIComponentBuilder.CreateButton(toolbar, "添加球", new Vector2(0.3f, 0));
+        GameObject deleteShapeButton = UIComponentBuilder.CreateButton(toolbar, "删除形状", new Vector2(0.2f, 0));
+        levelEditor.deleteShapeButton = deleteShapeButton.GetComponent<Button>();
+        
+        GameObject addBallButton = UIComponentBuilder.CreateButton(toolbar, "添加球", new Vector2(0.35f, 0));
         levelEditor.addBallButton = addBallButton.GetComponent<Button>();
         
+        GameObject deleteBallButton = UIComponentBuilder.CreateButton(toolbar, "删除球", new Vector2(0.5f, 0));
+        levelEditor.deleteBallButton = deleteBallButton.GetComponent<Button>();
+        
         // 创建背景按钮
-        GameObject backgroundButton = UIComponentBuilder.CreateButton(toolbar, "背景", new Vector2(0.5f, 0));
+        GameObject backgroundButton = UIComponentBuilder.CreateButton(toolbar, "背景", new Vector2(0.65f, 0));
         levelEditor.backgroundButton = backgroundButton.GetComponent<Button>();
         
         // 创建预览按钮
-        GameObject previewButton = UIComponentBuilder.CreateButton(toolbar, "预览", new Vector2(0.7f, 0));
+        GameObject previewButton = UIComponentBuilder.CreateButton(toolbar, "预览", new Vector2(0.8f, 0));
         levelEditor.previewButton = previewButton.GetComponent<Button>();
     }
     
