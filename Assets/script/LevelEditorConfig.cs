@@ -142,8 +142,18 @@ public class LevelEditorConfig : ScriptableObject
                 if (_instance == null)
                 {
                     _instance = CreateInstance<LevelEditorConfig>();
-                    // 新创建的实例需要初始化默认配置
-                    _instance.InitializeDefaultConfig();
+                    // 新创建的实例先尝试从文件加载配置，避免重置levelIndex
+                    try
+                    {
+                        _instance.LoadConfigFromFile();
+                        Debug.Log("新创建的配置实例已从文件加载");
+                    }
+                    catch (System.Exception e)
+                    {
+                        Debug.LogWarning($"从文件加载配置失败，使用默认配置: {e.Message}");
+                        // 只有在加载失败时才初始化默认配置
+                        _instance.InitializeDefaultConfig();
+                    }
                 }
             }
             return _instance;
@@ -347,7 +357,12 @@ public class LevelEditorConfig : ScriptableObject
                     if (this.shapeTypes.Count == 0 && this.ballTypes.Count == 0)
                     {
                         Debug.Log("加载的配置为空，初始化默认配置（不保存）");
+                        // 保存当前的levelIndex，避免被重置
+                        int savedLevelIndex = this.levelIndex;
                         InitializeDefaultConfigWithoutSave();
+                        // 确保levelIndex不被重置
+                        this.levelIndex = savedLevelIndex;
+                        Debug.Log($"保持levelIndex: {this.levelIndex}");
                     }
                     
                     // 触发配置重新加载事件
@@ -356,13 +371,23 @@ public class LevelEditorConfig : ScriptableObject
                 else
                 {
                     Debug.LogWarning("配置文件解析失败，初始化默认配置");
+                    // 保存当前的levelIndex，避免被重置
+                    int savedLevelIndex = this.levelIndex;
                     InitializeDefaultConfigWithoutSave();
+                    // 确保levelIndex不被重置
+                    this.levelIndex = savedLevelIndex;
+                    Debug.Log($"保持levelIndex: {this.levelIndex}");
                 }
             }
             else
             {
                 Debug.LogWarning("配置文件不存在: " + ConfigPath + "，初始化默认配置");
+                // 保存当前的levelIndex，避免被重置
+                int savedLevelIndex = this.levelIndex;
                 InitializeDefaultConfigWithoutSave();
+                // 确保levelIndex不被重置
+                this.levelIndex = savedLevelIndex;
+                Debug.Log($"保持levelIndex: {this.levelIndex}");
             }
         }
         catch (System.Exception e)
@@ -370,7 +395,12 @@ public class LevelEditorConfig : ScriptableObject
             Debug.LogError($"加载配置文件时发生异常: {e.Message}");
             Debug.LogError($"异常堆栈: {e.StackTrace}");
             // 发生异常时初始化默认配置
+            // 保存当前的levelIndex，避免被重置
+            int savedLevelIndex = this.levelIndex;
             InitializeDefaultConfigWithoutSave();
+            // 确保levelIndex不被重置
+            this.levelIndex = savedLevelIndex;
+            Debug.Log($"保持levelIndex: {this.levelIndex}");
         }
     }
     
@@ -446,6 +476,9 @@ public class LevelEditorConfig : ScriptableObject
 
     public void InitializeDefaultConfig()
     {
+        // 保存当前的levelIndex，避免被重置
+        int currentLevelIndex = this.levelIndex;
+        
         shapeTypes = new List<ShapeType>
         {
             new ShapeType { name = "圆形", sprite = LoadDefaultShapeSprite("圆形", "蓝色圆") },
@@ -467,9 +500,12 @@ public class LevelEditorConfig : ScriptableObject
             new BackgroundConfig { name = "深色背景", backgroundColor = new Color(0.2f, 0.2f, 0.2f), useSprite = false }
         };
         
+        // 恢复levelIndex，避免被重置
+        this.levelIndex = currentLevelIndex;
+        
         // 保存默认配置到文件
         SaveConfigToFile();
-        Debug.Log("默认配置已初始化并保存到文件");
+        Debug.Log($"默认配置已初始化并保存到文件，保持levelIndex: {this.levelIndex}");
     }
     
     /// <summary>
@@ -477,6 +513,9 @@ public class LevelEditorConfig : ScriptableObject
     /// </summary>
     public void InitializeDefaultConfigWithoutSave()
     {
+        // 保存当前的levelIndex，避免被重置
+        int currentLevelIndex = this.levelIndex;
+        
         shapeTypes = new List<ShapeType>
         {
             new ShapeType { name = "圆形", sprite = LoadDefaultShapeSprite("圆形", "蓝色圆") },
@@ -498,7 +537,10 @@ public class LevelEditorConfig : ScriptableObject
             new BackgroundConfig { name = "深色背景", backgroundColor = new Color(0.2f, 0.2f, 0.2f), useSprite = false }
         };
         
-        Debug.Log("默认配置已初始化（未保存到文件，避免循环调用）");
+        // 恢复levelIndex，避免被重置
+        this.levelIndex = currentLevelIndex;
+        
+        Debug.Log($"默认配置已初始化（未保存到文件，避免循环调用），保持levelIndex: {this.levelIndex}");
     }
     
     /// <summary>

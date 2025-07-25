@@ -42,10 +42,20 @@ public class ConfigPreviewUI : MonoBehaviour
         SetupEventListeners();
         SetupGridLayouts();
         
-        // 确保配置已加载
+        // 确保配置已加载（只在首次启动时）
         if (LevelEditorConfig.Instance != null)
         {
-            LevelEditorConfig.Instance.LoadConfigFromFile();
+            // 只在配置为空时才重新加载，避免重置levelIndex
+            var config = LevelEditorConfig.Instance;
+            if (config.shapeTypes.Count == 0 && config.ballTypes.Count == 0)
+            {
+                Debug.Log("ConfigPreviewUI: 配置为空，重新加载");
+                config.LoadConfigFromFile();
+            }
+            else
+            {
+                Debug.Log("ConfigPreviewUI: 配置已存在，跳过重新加载");
+            }
         }
         
         if (previewPanel != null)

@@ -26,15 +26,27 @@ public class LevelEditorUIBuilder
             var config = LevelEditorConfig.Instance;
             if (config != null)
             {
-                // 尝试从文件加载配置
-                config.LoadConfigFromFile();
-                Debug.Log("LevelEditorUIBuilder: 配置已加载");
-                
-                // 如果配置为空，初始化默认配置
+                // 只在配置为空时才重新加载，避免重置levelIndex
                 if (config.shapeTypes.Count == 0 && config.ballTypes.Count == 0)
                 {
-                    Debug.Log("LevelEditorUIBuilder: 配置为空，初始化默认配置");
-                    config.InitializeDefaultConfig();
+                    Debug.Log("LevelEditorUIBuilder: 配置为空，重新加载");
+                    config.LoadConfigFromFile();
+                    
+                    // 如果配置仍然为空，初始化默认配置
+                    if (config.shapeTypes.Count == 0 && config.ballTypes.Count == 0)
+                    {
+                        Debug.Log("LevelEditorUIBuilder: 配置为空，初始化默认配置");
+                        // 保存当前的levelIndex，避免被重置
+                        int savedLevelIndex = config.GetLevelIndex();
+                        config.InitializeDefaultConfig();
+                        // 确保levelIndex不被重置
+                        config.SetLevelIndex(savedLevelIndex);
+                        Debug.Log($"LevelEditorUIBuilder: 保持levelIndex: {savedLevelIndex}");
+                    }
+                }
+                else
+                {
+                    Debug.Log("LevelEditorUIBuilder: 配置已存在，跳过重新加载");
                 }
                 
                 Debug.Log($"LevelEditorUIBuilder: 配置加载完成 - 形状: {config.shapeTypes.Count}, 球: {config.ballTypes.Count}, 背景: {config.backgroundConfigs.Count}");

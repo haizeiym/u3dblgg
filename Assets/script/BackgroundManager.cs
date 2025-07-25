@@ -23,11 +23,20 @@ public class BackgroundManager : MonoBehaviour
                 backgroundImage = GetComponent<Image>();
             }
             
-            // 确保配置已加载
+            // 确保配置已加载（只在首次启动时）
             var config = LevelEditorConfig.Instance;
             if (config != null)
             {
-                config.LoadConfigFromFile();
+                // 只在配置为空时才重新加载，避免重置levelIndex
+                if (config.shapeTypes.Count == 0 && config.ballTypes.Count == 0)
+                {
+                    Debug.Log("BackgroundManager: 配置为空，重新加载");
+                    config.LoadConfigFromFile();
+                }
+                else
+                {
+                    Debug.Log("BackgroundManager: 配置已存在，跳过重新加载");
+                }
                 config.RefreshBackgroundSprites();
             }
             
