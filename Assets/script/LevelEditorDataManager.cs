@@ -74,6 +74,68 @@ public class LevelEditorDataManager
         }
     }
     
+    public void CreateLevel()
+    {
+        Debug.Log("开始创建新关卡");
+        
+        // 创建新关卡
+        string newLevelName = $"新关卡_{System.DateTime.Now:yyyyMMdd_HHmmss}";
+        LevelData newLevel = new LevelData(newLevelName);
+        
+        // 创建默认层级
+        LayerData defaultLayer = new LayerData("默认层级");
+        newLevel.layers.Add(defaultLayer);
+        
+        // 更新当前关卡和层级
+        editorUI.currentLevel = newLevel;
+        editorUI.currentLayer = defaultLayer;
+        
+        // 清除当前文件路径（新关卡未保存）
+        currentLevelFilePath = "";
+        
+        // 更新UI显示
+        UpdateLevelNameInUI(newLevelName);
+        
+        // 清空编辑区
+        ClearEditArea();
+        
+        // 刷新UI
+        editorUI.RefreshUI();
+        
+        Debug.Log($"新关卡已创建: {newLevelName}");
+    }
+    
+    public void UpdateLevelName(string newName)
+    {
+        if (string.IsNullOrEmpty(newName))
+        {
+            Debug.LogWarning("关卡名称不能为空");
+            return;
+        }
+        
+        if (editorUI.currentLevel != null)
+        {
+            string oldName = editorUI.currentLevel.levelName;
+            editorUI.currentLevel.levelName = newName;
+            Debug.Log($"关卡名称已更新: {oldName} -> {newName}");
+        }
+        else
+        {
+            Debug.LogWarning("当前没有关卡数据，无法更新名称");
+        }
+    }
+    
+    /// <summary>
+    /// 更新UI中的关卡名称显示
+    /// </summary>
+    void UpdateLevelNameInUI(string levelName)
+    {
+        if (editorUI.levelNameInput != null)
+        {
+            editorUI.levelNameInput.text = levelName;
+        }
+    }
+    
     public void AddShape()
     {
         Debug.Log($"开始添加形状，当前层级: {editorUI.currentLayer?.layerName}");

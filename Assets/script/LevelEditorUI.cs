@@ -17,6 +17,8 @@ public class LevelEditorUI : MonoBehaviour
     public Transform levelListContent;
     public Button addLayerButton;
     public Button deleteLayerButton;
+    public Button createLevelButton; // 新增：创建关卡按钮
+    public InputField levelNameInput; // 新增：关卡名称输入框
     
     [Header("Center Panel - Edit Area")]
     public Transform editAreaContent;
@@ -197,6 +199,18 @@ public class LevelEditorUI : MonoBehaviour
             allComponentsExist = false;
         }
         
+        if (createLevelButton == null)
+        {
+            Debug.LogWarning("创建关卡按钮未创建");
+            allComponentsExist = false;
+        }
+        
+        if (levelNameInput == null)
+        {
+            Debug.LogWarning("关卡名称输入框未创建");
+            allComponentsExist = false;
+        }
+        
         if (addShapeButton == null)
         {
             Debug.LogWarning("添加形状按钮未创建");
@@ -323,6 +337,26 @@ public class LevelEditorUI : MonoBehaviour
         else
         {
             Debug.LogError("删除层级按钮为空");
+        }
+        
+        if (createLevelButton != null)
+        {
+            createLevelButton.onClick.AddListener(OnCreateLevelClicked);
+            Debug.Log("创建关卡按钮事件绑定成功");
+        }
+        else
+        {
+            Debug.LogError("创建关卡按钮为空");
+        }
+        
+        if (levelNameInput != null)
+        {
+            levelNameInput.onValueChanged.AddListener(OnLevelNameChanged);
+            Debug.Log("关卡名称输入框事件绑定成功");
+        }
+        else
+        {
+            Debug.LogError("关卡名称输入框为空");
         }
     }
     
@@ -489,6 +523,18 @@ public class LevelEditorUI : MonoBehaviour
     {
         Debug.Log("删除层级按钮被点击！");
         DeleteLayer();
+    }
+    
+    void OnCreateLevelClicked()
+    {
+        Debug.Log("创建关卡按钮被点击！");
+        CreateLevel();
+    }
+    
+    void OnLevelNameChanged(string newName)
+    {
+        Debug.Log($"关卡名称已修改为: {newName}");
+        UpdateLevelName(newName);
     }
     
     void OnAddShapeClicked()
@@ -755,6 +801,12 @@ public class LevelEditorUI : MonoBehaviour
             // 如果层级列表不为空但当前层级为null，选择第一个层级
             currentLayer = currentLevel.layers[0];
         }
+        
+        // 初始化关卡名称显示
+        if (levelNameInput != null)
+        {
+            levelNameInput.text = currentLevel.levelName;
+        }
     }
     
     /// <summary>
@@ -808,6 +860,16 @@ public class LevelEditorUI : MonoBehaviour
     public void DeleteLayer()
     {
         if (dataManager != null) dataManager.DeleteLayer();
+    }
+    
+    public void CreateLevel()
+    {
+        if (dataManager != null) dataManager.CreateLevel();
+    }
+    
+    public void UpdateLevelName(string newName)
+    {
+        if (dataManager != null) dataManager.UpdateLevelName(newName);
     }
     
     public void AddShape()

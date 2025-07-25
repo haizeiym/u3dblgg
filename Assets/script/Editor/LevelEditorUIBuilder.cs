@@ -89,7 +89,7 @@ public class LevelEditorUIBuilder
         
         RectTransform contentRect = content.AddComponent<RectTransform>();
         contentRect.anchorMin = new Vector2(0, 0);
-        contentRect.anchorMax = new Vector2(1, 0.8f);
+        contentRect.anchorMax = new Vector2(1, 0.6f); // 调整为0.6f，为上方按钮和输入框腾出空间
         contentRect.offsetMin = Vector2.zero;
         contentRect.offsetMax = Vector2.zero;
         
@@ -182,6 +182,82 @@ public class LevelEditorUIBuilder
         deleteTextComponent.fontSize = 20;
         deleteTextComponent.color = Color.white;
         deleteTextComponent.alignment = TextAnchor.MiddleCenter;
+        
+        // 创建关卡名称输入框
+        GameObject levelNameInputObj = new GameObject("关卡名称Input");
+        levelNameInputObj.transform.SetParent(parent.transform, false);
+        
+        RectTransform levelNameInputRect = levelNameInputObj.AddComponent<RectTransform>();
+        levelNameInputRect.anchorMin = new Vector2(0, 0.75f);
+        levelNameInputRect.anchorMax = new Vector2(0.15f, 0.8f);
+        levelNameInputRect.offsetMin = Vector2.zero;
+        levelNameInputRect.offsetMax = Vector2.zero;
+        
+        Image levelNameInputBg = levelNameInputObj.AddComponent<Image>();
+        levelNameInputBg.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+        
+        InputField levelNameInputComponent = levelNameInputObj.AddComponent<InputField>();
+        levelNameInputComponent.text = "新关卡";
+        
+        levelEditor.levelNameInput = levelNameInputComponent;
+        
+        // 创建输入框文本
+        GameObject levelNameTextObj = new GameObject("Text");
+        levelNameTextObj.transform.SetParent(levelNameInputObj.transform, false);
+        
+        RectTransform levelNameTextRect = levelNameTextObj.AddComponent<RectTransform>();
+        levelNameTextRect.anchorMin = Vector2.zero;
+        levelNameTextRect.anchorMax = Vector2.one;
+        levelNameTextRect.offsetMin = new Vector2(5, 0);
+        levelNameTextRect.offsetMax = new Vector2(-5, 0);
+        
+        Text levelNameTextComponent = levelNameTextObj.AddComponent<Text>();
+        levelNameTextComponent.text = "新关卡";
+        levelNameTextComponent.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        levelNameTextComponent.fontSize = 16;
+        levelNameTextComponent.color = Color.white;
+        levelNameTextComponent.alignment = TextAnchor.MiddleLeft;
+        
+        levelNameInputComponent.textComponent = levelNameTextComponent;
+        
+        // 创建创建关卡按钮
+        GameObject createLevelButtonObj = new GameObject("创建关卡Button");
+        createLevelButtonObj.transform.SetParent(parent.transform, false);
+        
+        RectTransform createLevelButtonRect = createLevelButtonObj.AddComponent<RectTransform>();
+        createLevelButtonRect.anchorMin = new Vector2(0, 0.65f);
+        createLevelButtonRect.anchorMax = new Vector2(0.15f, 0.7f);
+        createLevelButtonRect.offsetMin = Vector2.zero;
+        createLevelButtonRect.offsetMax = Vector2.zero;
+        
+        Image createLevelButtonBg = createLevelButtonObj.AddComponent<Image>();
+        createLevelButtonBg.color = new Color(0.2f, 0.6f, 0.2f, 1f); // 绿色
+        createLevelButtonBg.raycastTarget = true;
+        
+        Button createLevelButtonComponent = createLevelButtonObj.AddComponent<Button>();
+        createLevelButtonComponent.targetGraphic = createLevelButtonBg;
+        createLevelButtonComponent.interactable = true;
+        createLevelButtonComponent.transition = Selectable.Transition.ColorTint;
+        createLevelButtonComponent.navigation = new Navigation() { mode = Navigation.Mode.None };
+        
+        levelEditor.createLevelButton = createLevelButtonComponent;
+        
+        // 创建按钮文本
+        GameObject createLevelTextObj = new GameObject("Text");
+        createLevelTextObj.transform.SetParent(createLevelButtonObj.transform, false);
+        
+        RectTransform createLevelTextRect = createLevelTextObj.AddComponent<RectTransform>();
+        createLevelTextRect.anchorMin = Vector2.zero;
+        createLevelTextRect.anchorMax = Vector2.one;
+        createLevelTextRect.offsetMin = Vector2.zero;
+        createLevelTextRect.offsetMax = Vector2.zero;
+        
+        Text createLevelTextComponent = createLevelTextObj.AddComponent<Text>();
+        createLevelTextComponent.text = "创建关卡";
+        createLevelTextComponent.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        createLevelTextComponent.fontSize = 16;
+        createLevelTextComponent.color = Color.white;
+        createLevelTextComponent.alignment = TextAnchor.MiddleCenter;
         
         Debug.Log("左侧面板按钮创建完成");
     }
