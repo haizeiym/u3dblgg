@@ -65,6 +65,9 @@ public class LevelEditorUI : MonoBehaviour
     private LevelEditorUIManager uiManager;
     private LevelEditorDataManager dataManager;
     
+    // 公共属性，用于访问uiManager
+    public LevelEditorUIManager UIManager => uiManager;
+    
     #if UNITY_EDITOR
     private IUIUpdater uiUpdater; // 使用接口类型
     #endif
@@ -997,9 +1000,9 @@ public class LevelEditorUI : MonoBehaviour
     
     public void RefreshUI()
     {
-        if (uiManager != null)
+        if (UIManager != null)
         {
-            uiManager.RefreshUI();
+            UIManager.RefreshUI();
         }
     }
     
@@ -1068,7 +1071,31 @@ public class LevelEditorUI : MonoBehaviour
         selectedShape.ShapeData.SaveFixedPositionsToConfig();
         
         Debug.Log($"已为形状 '{selectedShape.ShapeData.shapeType}' 添加固定位置: {mousePosition}");
+        
+        // 保存当前选中的形状信息，以便在UI刷新后恢复
+        string selectedShapeType = selectedShape.ShapeData.shapeType;
+        Vector2 selectedShapePosition = selectedShape.ShapeData.position;
+        float selectedShapeRotation = selectedShape.ShapeData.rotation;
+        
         RefreshUI();
+        
+        // 恢复形状的选中状态
+        foreach (GameObject shapeObj in UIManager.GetAllShapeObjects())
+        {
+            ShapeController controller = shapeObj.GetComponent<ShapeController>();
+            if (controller != null && controller.ShapeData != null)
+            {
+                ShapeData currentShapeData = controller.ShapeData;
+                if (currentShapeData.shapeType == selectedShapeType &&
+                    Vector2.Distance(currentShapeData.position, selectedShapePosition) < 0.1f &&
+                    Mathf.Abs(currentShapeData.rotation - selectedShapeRotation) < 0.1f)
+                {
+                    SelectShape(controller);
+                    Debug.Log($"已恢复形状选中状态: {selectedShapeType}");
+                    break;
+                }
+            }
+        }
     }
     
     /// <summary>
@@ -1088,7 +1115,31 @@ public class LevelEditorUI : MonoBehaviour
         selectedShape.ShapeData.SaveFixedPositionsToConfig();
         
         Debug.Log($"已为形状 '{selectedShape.ShapeData.shapeType}' 添加固定位置: {position}");
+        
+        // 保存当前选中的形状信息，以便在UI刷新后恢复
+        string selectedShapeType = selectedShape.ShapeData.shapeType;
+        Vector2 selectedShapePosition = selectedShape.ShapeData.position;
+        float selectedShapeRotation = selectedShape.ShapeData.rotation;
+        
         RefreshUI();
+        
+        // 恢复形状的选中状态
+        foreach (GameObject shapeObj in UIManager.GetAllShapeObjects())
+        {
+            ShapeController controller = shapeObj.GetComponent<ShapeController>();
+            if (controller != null && controller.ShapeData != null)
+            {
+                ShapeData currentShapeData = controller.ShapeData;
+                if (currentShapeData.shapeType == selectedShapeType &&
+                    Vector2.Distance(currentShapeData.position, selectedShapePosition) < 0.1f &&
+                    Mathf.Abs(currentShapeData.rotation - selectedShapeRotation) < 0.1f)
+                {
+                    SelectShape(controller);
+                    Debug.Log($"已恢复形状选中状态: {selectedShapeType}");
+                    break;
+                }
+            }
+        }
     }
     
     public void ClearFixedPositions()
@@ -1105,7 +1156,31 @@ public class LevelEditorUI : MonoBehaviour
         selectedShape.ShapeData.SaveFixedPositionsToConfig();
         
         Debug.Log($"已清除形状 '{selectedShape.ShapeData.shapeType}' 的所有固定位置");
+        
+        // 保存当前选中的形状信息，以便在UI刷新后恢复
+        string selectedShapeType = selectedShape.ShapeData.shapeType;
+        Vector2 selectedShapePosition = selectedShape.ShapeData.position;
+        float selectedShapeRotation = selectedShape.ShapeData.rotation;
+        
         RefreshUI();
+        
+        // 恢复形状的选中状态
+        foreach (GameObject shapeObj in UIManager.GetAllShapeObjects())
+        {
+            ShapeController controller = shapeObj.GetComponent<ShapeController>();
+            if (controller != null && controller.ShapeData != null)
+            {
+                ShapeData currentShapeData = controller.ShapeData;
+                if (currentShapeData.shapeType == selectedShapeType &&
+                    Vector2.Distance(currentShapeData.position, selectedShapePosition) < 0.1f &&
+                    Mathf.Abs(currentShapeData.rotation - selectedShapeRotation) < 0.1f)
+                {
+                    SelectShape(controller);
+                    Debug.Log($"已恢复形状选中状态: {selectedShapeType}");
+                    break;
+                }
+            }
+        }
     }
     
     public void ShowFixedPositions()
@@ -1187,27 +1262,27 @@ public class LevelEditorUI : MonoBehaviour
     
     public void SelectShape(ShapeController shape)
     {
-        if (uiManager != null) uiManager.SelectShape(shape);
+        if (UIManager != null) UIManager.SelectShape(shape);
     }
     
     public void SelectBall(BallController ball)
     {
-        if (uiManager != null) uiManager.SelectBall(ball);
+        if (UIManager != null) UIManager.SelectBall(ball);
     }
     
     public void OnPositionXChanged(float value)
     {
-        if (uiManager != null) uiManager.UpdatePositionX(value);
+        if (UIManager != null) UIManager.UpdatePositionX(value);
     }
     
     public void OnPositionYChanged(float value)
     {
-        if (uiManager != null) uiManager.UpdatePositionY(value);
+        if (UIManager != null) UIManager.UpdatePositionY(value);
     }
     
     public void OnRotationChanged(float value)
     {
-        if (uiManager != null) uiManager.UpdateRotation(value);
+        if (UIManager != null) UIManager.UpdateRotation(value);
     }
     
     /// <summary>
@@ -1216,12 +1291,12 @@ public class LevelEditorUI : MonoBehaviour
     public void UpdateShapeType(int index)
     {
         currentShapeTypeIndex = index;
-        if (uiManager != null) uiManager.UpdateType(index);
+        if (UIManager != null) UIManager.UpdateType(index);
     }
 
     public void UpdateBallType(int index)
     {
-        if (uiManager != null) uiManager.UpdateBallType(index);
+        if (UIManager != null) UIManager.UpdateBallType(index);
     }
     
     /// <summary>

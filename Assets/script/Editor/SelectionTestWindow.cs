@@ -63,8 +63,18 @@ public class SelectionTestWindow : EditorWindow
         {
             TestForceRefreshUI();
         }
+
+        if (GUILayout.Button("🧪 测试选中状态恢复"))
+        {
+            TestSelectionRestore();
+        }
         
-        EditorGUILayout.Space();
+        if (GUILayout.Button("🔄 测试图形类型切换"))
+        {
+            TestShapeTypeSwitch();
+        }
+        
+        EditorGUILayout.EndHorizontal();
         
         // 显示所有形状的固定位置
         if (levelEditorUI.currentLevel != null)
@@ -123,8 +133,111 @@ public class SelectionTestWindow : EditorWindow
         if (levelEditorUI != null)
         {
             levelEditorUI.RefreshUI();
-            Debug.Log("强制刷新UI完成");
-            Repaint();
+            Debug.Log("已强制刷新UI");
+        }
+        else
+        {
+            Debug.LogError("未找到LevelEditorUI");
+        }
+    }
+    
+    void TestSelectionRestore()
+    {
+        LevelEditorUI levelEditorUI = FindObjectOfType<LevelEditorUI>();
+        if (levelEditorUI?.selectedShape != null)
+        {
+            // 保存当前选中的形状信息
+            ShapeData originalShapeData = levelEditorUI.selectedShape.ShapeData;
+            Debug.Log($"测试前选中形状: {originalShapeData.shapeType} (位置: {originalShapeData.position})");
+            
+            // 强制刷新UI
+            levelEditorUI.RefreshUI();
+            
+            // 检查刷新后是否仍然选中相同的形状
+            if (levelEditorUI.selectedShape != null)
+            {
+                ShapeData currentShapeData = levelEditorUI.selectedShape.ShapeData;
+                Debug.Log($"测试后选中形状: {currentShapeData.shapeType} (位置: {currentShapeData.position})");
+                
+                if (currentShapeData.shapeType == originalShapeData.shapeType &&
+                    Vector2.Distance(currentShapeData.position, originalShapeData.position) < 0.1f)
+                {
+                    Debug.Log("✅ 选中状态恢复测试成功！");
+                }
+                else
+                {
+                    Debug.LogWarning("⚠️ 选中状态恢复测试失败！");
+                }
+            }
+            else
+            {
+                Debug.LogError("❌ 刷新后没有选中任何形状！");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("请先选中一个形状进行测试");
+        }
+    }
+    
+    void TestShapeTypeSwitch()
+    {
+        LevelEditorUI levelEditorUI = FindObjectOfType<LevelEditorUI>();
+        if (levelEditorUI?.selectedShape != null)
+        {
+            ShapeData shapeData = levelEditorUI.selectedShape.ShapeData;
+            Debug.Log($"=== 图形类型切换测试 ===");
+            Debug.Log($"当前形状类型: {shapeData.shapeType}");
+            Debug.Log($"当前固定位置数量: {shapeData.fixedPositions.Count}");
+            Debug.Log($"当前球数量: {shapeData.balls.Count}");
+            
+            // 获取所有可用的形状类型
+            var config = LevelEditorConfig.Instance;
+            if (config != null)
+            {
+                string[] shapeTypes = config.GetShapeTypeNames();
+                Debug.Log($"可用形状类型: {string.Join(", ", shapeTypes)}");
+                
+                // 找到下一个形状类型
+                int currentIndex = System.Array.IndexOf(shapeTypes, shapeData.shapeType);
+                int nextIndex = (currentIndex + 1) % shapeTypes.Length;
+                string nextType = shapeTypes[nextIndex];
+                
+                Debug.Log($"切换到形状类型: {nextType}");
+                
+                // 执行切换
+                levelEditorUI.UpdateShapeType(nextIndex);
+                
+                // 等待一帧让更新完成
+                EditorApplication.delayCall += () =>
+                {
+                    Debug.Log($"=== 切换后状态 ===");
+                    Debug.Log($"新形状类型: {shapeData.shapeType}");
+                    Debug.Log($"新固定位置数量: {shapeData.fixedPositions.Count}");
+                    Debug.Log($"球数量: {shapeData.balls.Count}");
+                    
+                    // 显示新形状类型的固定位置配置
+                    var newFixedPosConfig = config.GetFixedPositionConfig(shapeData.shapeType);
+                    if (newFixedPosConfig != null)
+                    {
+                        Debug.Log($"配置文件中的固定位置数量: {newFixedPosConfig.fixedPositions.Count}");
+                        for (int i = 0; i < newFixedPosConfig.fixedPositions.Count; i++)
+                        {
+                            Debug.Log($"  配置位置{i + 1}: {newFixedPosConfig.fixedPositions[i]}");
+                        }
+                    }
+                    else
+                    {
+                        Debug.Log("配置文件中没有该形状类型的固定位置配置");
+                    }
+                    
+                    Debug.Log("=== 测试完成 ===");
+                };
+            }
+        }
+        else
+        {
+            Debug.LogWarning("请先选中一个形状进行测试");
         }
     }
 } 

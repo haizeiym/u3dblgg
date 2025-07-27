@@ -11,13 +11,11 @@ using UnityEditor;
 public class LevelEditorDataManager
 {
     private LevelEditorUI editorUI;
-    private LevelEditorUIManager uiManager;
     private string currentLevelFilePath; // 记录当前关卡的文件路径
     
     public LevelEditorDataManager(LevelEditorUI editor)
     {
         editorUI = editor;
-        uiManager = new LevelEditorUIManager(editor);
         InitializeLevel();
     }
     
@@ -229,9 +227,9 @@ public class LevelEditorDataManager
             Debug.Log($"=== 验证结束 ===");
             
             // 检查uiManager
-            if (uiManager == null)
+            if (editorUI.UIManager == null)
             {
-                Debug.LogError("uiManager为空，无法创建形状对象");
+                Debug.LogError("UIManager为空，无法创建形状对象");
                 return;
             }
             
@@ -248,7 +246,7 @@ public class LevelEditorDataManager
                 return;
             }
             
-            GameObject newShapeObj = uiManager.CreateShapeObject(newShape);
+            GameObject newShapeObj = editorUI.UIManager.CreateShapeObject(newShape);
             
             // 自动选中新创建的形状
             if (newShapeObj != null)
@@ -352,8 +350,31 @@ public class LevelEditorDataManager
         
         Debug.Log($"球已添加到形状 '{selectedShapeData.shapeType}' 中，球数量: {selectedShapeData.balls.Count}");
         
+        // 保存当前选中的形状信息，以便在UI刷新后恢复
+        string selectedShapeType = selectedShapeData.shapeType;
+        Vector2 selectedShapePosition = selectedShapeData.position;
+        float selectedShapeRotation = selectedShapeData.rotation;
+        
         // 刷新UI
         editorUI.RefreshUI();
+        
+        // 恢复形状的选中状态
+        foreach (GameObject shapeObj in editorUI.UIManager.GetAllShapeObjects())
+        {
+            ShapeController controller = shapeObj.GetComponent<ShapeController>();
+            if (controller != null && controller.ShapeData != null)
+            {
+                ShapeData currentShapeData = controller.ShapeData;
+                if (currentShapeData.shapeType == selectedShapeType &&
+                    Vector2.Distance(currentShapeData.position, selectedShapePosition) < 0.1f &&
+                    Mathf.Abs(currentShapeData.rotation - selectedShapeRotation) < 0.1f)
+                {
+                    editorUI.SelectShape(controller);
+                    Debug.Log($"已恢复形状选中状态: {selectedShapeType}");
+                    break;
+                }
+            }
+        }
     }
     
     public void DeleteShape()

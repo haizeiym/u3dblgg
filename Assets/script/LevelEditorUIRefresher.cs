@@ -344,11 +344,18 @@ public class LevelEditorUIRefresher
             foreach (GameObject shapeObj in shapeObjects)
             {
                 ShapeController controller = shapeObj.GetComponent<ShapeController>();
-                if (controller != null && controller.ShapeData == selectedShapeData)
+                if (controller != null && controller.ShapeData != null)
                 {
-                    editorUI.SelectShape(controller);
-                    Debug.Log($"已恢复形状选中状态: {selectedShapeData.shapeType}");
-                    break;
+                    // 使用形状类型和位置来匹配，而不是引用比较
+                    ShapeData currentShapeData = controller.ShapeData;
+                    if (currentShapeData.shapeType == selectedShapeData.shapeType &&
+                        Vector2.Distance(currentShapeData.position, selectedShapeData.position) < 0.1f &&
+                        Mathf.Abs(currentShapeData.rotation - selectedShapeData.rotation) < 0.1f)
+                    {
+                        editorUI.SelectShape(controller);
+                        Debug.Log($"已恢复形状选中状态: {selectedShapeData.shapeType} (位置: {selectedShapeData.position})");
+                        break;
+                    }
                 }
             }
         }
@@ -359,11 +366,17 @@ public class LevelEditorUIRefresher
             foreach (GameObject ballObj in ballObjects)
             {
                 BallController controller = ballObj.GetComponent<BallController>();
-                if (controller != null && controller.BallData == selectedBallData)
+                if (controller != null && controller.BallData != null)
                 {
-                    editorUI.SelectBall(controller);
-                    Debug.Log($"已恢复球选中状态: {selectedBallData.ballType}");
-                    break;
+                    // 使用球类型和位置来匹配，而不是引用比较
+                    BallData currentBallData = controller.BallData;
+                    if (currentBallData.ballType == selectedBallData.ballType &&
+                        Vector2.Distance(currentBallData.position, selectedBallData.position) < 0.1f)
+                    {
+                        editorUI.SelectBall(controller);
+                        Debug.Log($"已恢复球选中状态: {selectedBallData.ballType} (位置: {selectedBallData.position})");
+                        break;
+                    }
                 }
             }
         }
@@ -694,5 +707,13 @@ public class LevelEditorUIRefresher
             return shapeObjects[shapeObjects.Count - 1];
         }
         return null;
+    }
+    
+    /// <summary>
+    /// 获取所有形状对象
+    /// </summary>
+    public List<GameObject> GetAllShapeObjects()
+    {
+        return new List<GameObject>(shapeObjects);
     }
 } 
