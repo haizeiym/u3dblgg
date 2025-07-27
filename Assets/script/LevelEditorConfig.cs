@@ -98,6 +98,25 @@ public class BackgroundConfig
     /// <summary>
     /// 获取资源路径
     /// </summary>
+    private string GetResourcePath(string assetPath)
+    {
+        if (string.IsNullOrEmpty(assetPath)) return null;
+        
+        // 查找Resources文件夹
+        int resourcesIndex = assetPath.IndexOf("/Resources/");
+        if (resourcesIndex >= 0)
+        {
+            // 提取Resources后的路径，并移除扩展名
+            string resourcePath = assetPath.Substring(resourcesIndex + 11);
+            return Path.ChangeExtension(resourcePath, null);
+        }
+        
+        return null;
+    }
+    
+    /// <summary>
+    /// 获取资源路径
+    /// </summary>
     private string GetAssetPath(Sprite sprite)
     {
         if (sprite == null) return null;
@@ -108,23 +127,27 @@ public class BackgroundConfig
         return null;
         #endif
     }
+}
+
+/// <summary>
+/// 固定位置配置
+/// </summary>
+[System.Serializable]
+public class FixedPositionConfig
+{
+    public string shapeType;
+    public List<Vector2> fixedPositions = new List<Vector2>();
     
-    /// <summary>
-    /// 获取Resources路径
-    /// </summary>
-    private string GetResourcePath(string assetPath)
+    public FixedPositionConfig(string type)
     {
-        if (string.IsNullOrEmpty(assetPath)) return null;
-        
-        // 检查是否在Resources文件夹中
-        int resourcesIndex = assetPath.IndexOf("/Resources/");
-        if (resourcesIndex >= 0)
-        {
-            string relativePath = assetPath.Substring(resourcesIndex + 11); // "/Resources/".Length
-            return Path.ChangeExtension(relativePath, null); // 移除扩展名
-        }
-        
-        return null;
+        shapeType = type;
+        fixedPositions = new List<Vector2>();
+    }
+    
+    public FixedPositionConfig(string type, List<Vector2> positions)
+    {
+        shapeType = type;
+        fixedPositions = new List<Vector2>(positions);
     }
 }
 
@@ -163,6 +186,7 @@ public class LevelEditorConfig : ScriptableObject
     public List<ShapeType> shapeTypes = new List<ShapeType>();
     public List<BallType> ballTypes = new List<BallType>();
     public List<BackgroundConfig> backgroundConfigs = new List<BackgroundConfig>();
+    public List<FixedPositionConfig> fixedPositionConfigs = new List<FixedPositionConfig>(); // 新增：固定位置配置
     public int currentBackgroundIndex = 0;
     public int levelIndex = 1; // 新增：关卡索引，初始值为1
     
@@ -203,11 +227,57 @@ public class LevelEditorConfig : ScriptableObject
     }
     
     [System.Serializable]
+    private class SerializableFixedPositionConfig
+    {
+        public string shapeType;
+        public List<SerializableVector2> fixedPositions;
+        
+        public SerializableFixedPositionConfig(FixedPositionConfig config)
+        {
+            shapeType = config.shapeType;
+            fixedPositions = new List<SerializableVector2>();
+            foreach (var pos in config.fixedPositions)
+            {
+                fixedPositions.Add(new SerializableVector2(pos));
+            }
+        }
+        
+        public FixedPositionConfig ToFixedPositionConfig()
+        {
+            var config = new FixedPositionConfig(shapeType);
+            foreach (var pos in fixedPositions)
+            {
+                config.fixedPositions.Add(pos.ToVector2());
+            }
+            return config;
+        }
+    }
+    
+    [System.Serializable]
+    private class SerializableVector2
+    {
+        public float x;
+        public float y;
+        
+        public SerializableVector2(Vector2 vector)
+        {
+            x = vector.x;
+            y = vector.y;
+        }
+        
+        public Vector2 ToVector2()
+        {
+            return new Vector2(x, y);
+        }
+    }
+    
+    [System.Serializable]
     private class SerializableConfig
     {
         public List<SerializableShapeType> shapeTypes;
         public List<SerializableBallType> ballTypes;
         public List<SerializableBackgroundConfig> backgroundConfigs;
+        public List<SerializableFixedPositionConfig> fixedPositionConfigs; // 新增：固定位置配置
         public int currentBackgroundIndex;
         public int levelIndex = 1; // 新增：关卡索引，初始值为1
     }
@@ -255,17 +325,28 @@ public class LevelEditorConfig : ScriptableObject
             });
         }
 
-        var data = new SerializableConfig
+        // 转换为可序列化的固定位置配置
+        var serializableFixedPositions = new List<SerializableFixedPositionConfig>();
+        foreach (var fp in this.fixedPositionConfigs)
+        {
+            serializableFixedPositions.Add(new SerializableFixedPositionConfig(fp));
+        }
+
+        // 创建完整的配置对象
+        var config = new SerializableConfig
         {
             shapeTypes = serializableShapes,
             ballTypes = serializableBalls,
             backgroundConfigs = serializableBackgrounds,
+            fixedPositionConfigs = serializableFixedPositions, // 新增：固定位置配置
             currentBackgroundIndex = this.currentBackgroundIndex,
-            levelIndex = this.levelIndex
+            levelIndex = this.levelIndex // 新增：关卡索引
         };
-        string json = JsonUtility.ToJson(data, true);
+
+        // 序列化为JSON并保存
+        string json = JsonUtility.ToJson(config, true);
         File.WriteAllText(ConfigPath, json);
-        Debug.Log("配置已保存到: " + ConfigPath);
+        Debug.Log($"配置已保存到: {ConfigPath}");
     }
     
     /// <summary>
@@ -349,9 +430,19 @@ public class LevelEditorConfig : ScriptableObject
                         }
                     }
                     
+                    // 转换固定位置配置
+                    this.fixedPositionConfigs = new List<FixedPositionConfig>();
+                    if (data.fixedPositionConfigs != null)
+                    {
+                        foreach (var serializableFp in data.fixedPositionConfigs)
+                        {
+                            this.fixedPositionConfigs.Add(serializableFp.ToFixedPositionConfig());
+                        }
+                    }
+                    
                     this.currentBackgroundIndex = data.currentBackgroundIndex;
                     this.levelIndex = data.levelIndex; // 新增：加载关卡索引
-                    Debug.Log("配置已从文件加载: " + ConfigPath);
+                    Debug.Log($"配置已从文件加载: {ConfigPath}, 固定位置配置数量: {this.fixedPositionConfigs.Count}");
                     
                     // 检查配置是否为空，如果为空则初始化默认配置（不保存，避免循环）
                     if (this.shapeTypes.Count == 0 && this.ballTypes.Count == 0)
@@ -901,15 +992,105 @@ public class LevelEditorConfig : ScriptableObject
     /// </summary>
     public void SetLevelIndex(int index)
     {
-        if (index >= 1)
+        this.levelIndex = index;
+        SaveConfigToFile();
+        Debug.Log($"关卡索引已设置为: {index}");
+    }
+    
+    /// <summary>
+    /// 获取指定形状类型的固定位置配置
+    /// </summary>
+    public FixedPositionConfig GetFixedPositionConfig(string shapeType)
+    {
+        foreach (var config in fixedPositionConfigs)
         {
-            levelIndex = index;
-            SaveConfigToFile();
-            Debug.Log($"关卡索引已设置为: {levelIndex}");
+            if (config.shapeType == shapeType)
+            {
+                return config;
+            }
+        }
+        return null;
+    }
+    
+    /// <summary>
+    /// 添加或更新固定位置配置
+    /// </summary>
+    public void SetFixedPositionConfig(string shapeType, List<Vector2> positions)
+    {
+        // 查找现有配置
+        var existingConfig = GetFixedPositionConfig(shapeType);
+        if (existingConfig != null)
+        {
+            // 更新现有配置
+            existingConfig.fixedPositions.Clear();
+            existingConfig.fixedPositions.AddRange(positions);
+            Debug.Log($"已更新形状 '{shapeType}' 的固定位置配置，位置数量: {positions.Count}");
         }
         else
         {
-            Debug.LogWarning($"关卡索引不能小于1，当前值: {index}");
+            // 创建新配置
+            var newConfig = new FixedPositionConfig(shapeType, positions);
+            fixedPositionConfigs.Add(newConfig);
+            Debug.Log($"已为形状 '{shapeType}' 创建固定位置配置，位置数量: {positions.Count}");
+        }
+        
+        // 保存到文件
+        SaveConfigToFile();
+    }
+    
+    /// <summary>
+    /// 添加单个固定位置
+    /// </summary>
+    public void AddFixedPosition(string shapeType, Vector2 position)
+    {
+        var config = GetFixedPositionConfig(shapeType);
+        if (config == null)
+        {
+            config = new FixedPositionConfig(shapeType);
+            fixedPositionConfigs.Add(config);
+        }
+        
+        config.fixedPositions.Add(position);
+        SaveConfigToFile();
+        Debug.Log($"已为形状 '{shapeType}' 添加固定位置: {position}");
+    }
+    
+    /// <summary>
+    /// 清除指定形状类型的所有固定位置
+    /// </summary>
+    public void ClearFixedPositions(string shapeType)
+    {
+        var config = GetFixedPositionConfig(shapeType);
+        if (config != null)
+        {
+            config.fixedPositions.Clear();
+            SaveConfigToFile();
+            Debug.Log($"已清除形状 '{shapeType}' 的所有固定位置");
+        }
+    }
+    
+    /// <summary>
+    /// 获取所有固定位置配置
+    /// </summary>
+    public List<FixedPositionConfig> GetAllFixedPositionConfigs()
+    {
+        return new List<FixedPositionConfig>(fixedPositionConfigs);
+    }
+    
+    /// <summary>
+    /// 删除指定形状类型的固定位置配置
+    /// </summary>
+    public void RemoveFixedPositionConfig(string shapeType)
+    {
+        for (int i = fixedPositionConfigs.Count - 1; i >= 0; i--)
+        {
+            if (fixedPositionConfigs[i].shapeType == shapeType)
+            {
+                fixedPositionConfigs.RemoveAt(i);
+                SaveConfigToFile();
+                Debug.Log($"已删除形状 '{shapeType}' 的固定位置配置");
+                return;
+            }
         }
     }
 }

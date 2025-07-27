@@ -98,6 +98,41 @@ public class ShapeData
         if (fixedPositions != null)
             fixedPositions.Clear();
     }
+    
+    /// <summary>
+    /// 从配置文件加载固定位置
+    /// </summary>
+    public void LoadFixedPositionsFromConfig()
+    {
+        var config = LevelEditorConfig.Instance;
+        if (config != null)
+        {
+            var fixedPosConfig = config.GetFixedPositionConfig(shapeType);
+            if (fixedPosConfig != null)
+            {
+                fixedPositions.Clear();
+                fixedPositions.AddRange(fixedPosConfig.fixedPositions);
+                Debug.Log($"已从配置文件加载形状 '{shapeType}' 的固定位置，数量: {fixedPositions.Count}");
+            }
+            else
+            {
+                Debug.Log($"配置文件中未找到形状 '{shapeType}' 的固定位置配置");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 保存固定位置到配置文件
+    /// </summary>
+    public void SaveFixedPositionsToConfig()
+    {
+        var config = LevelEditorConfig.Instance;
+        if (config != null)
+        {
+            config.SetFixedPositionConfig(shapeType, new List<Vector2>(fixedPositions));
+            Debug.Log($"已保存形状 '{shapeType}' 的固定位置到配置文件，数量: {fixedPositions.Count}");
+        }
+    }
 }
 
 [Serializable]

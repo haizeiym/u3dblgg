@@ -33,6 +33,13 @@ public class ShapeController : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     {
         shapeData = data;
         editorUI = ui;
+        
+        // 从配置文件加载固定位置
+        if (shapeData != null)
+        {
+            shapeData.LoadFixedPositionsFromConfig();
+        }
+        
         UpdateVisual();
     }
     

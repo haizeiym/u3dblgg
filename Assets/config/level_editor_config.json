@@ -108,6 +108,55 @@
             }
         }
     ],
+    "fixedPositionConfigs": [
+        {
+            "shapeType": "圆形",
+            "fixedPositions": [
+                {
+                    "x": 100.0,
+                    "y": 200.0
+                },
+                {
+                    "x": 150.0,
+                    "y": 250.0
+                },
+                {
+                    "x": 30.0,
+                    "y": 45.0
+                },
+                {
+                    "x": 122.0,
+                    "y": -56.0
+                }
+            ]
+        },
+        {
+            "shapeType": "矩形",
+            "fixedPositions": [
+                {
+                    "x": 200.0,
+                    "y": 300.0
+                }
+            ]
+        },
+        {
+            "shapeType": "三角形",
+            "fixedPositions": [
+                {
+                    "x": -3.0,
+                    "y": -45.0
+                },
+                {
+                    "x": -222.0,
+                    "y": 87.0
+                },
+                {
+                    "x": 312.0,
+                    "y": 45.0
+                }
+            ]
+        }
+    ],
     "currentBackgroundIndex": 0,
     "levelIndex": 5
 }

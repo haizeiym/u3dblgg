@@ -1064,6 +1064,9 @@ public class LevelEditorUI : MonoBehaviour
         
         selectedShape.ShapeData.AddFixedPosition(mousePosition);
         
+        // 保存到配置文件
+        selectedShape.ShapeData.SaveFixedPositionsToConfig();
+        
         Debug.Log($"已为形状 '{selectedShape.ShapeData.shapeType}' 添加固定位置: {mousePosition}");
         RefreshUI();
     }
@@ -1081,6 +1084,9 @@ public class LevelEditorUI : MonoBehaviour
         
         selectedShape.ShapeData.AddFixedPosition(position);
         
+        // 保存到配置文件
+        selectedShape.ShapeData.SaveFixedPositionsToConfig();
+        
         Debug.Log($"已为形状 '{selectedShape.ShapeData.shapeType}' 添加固定位置: {position}");
         RefreshUI();
     }
@@ -1094,6 +1100,10 @@ public class LevelEditorUI : MonoBehaviour
         }
         
         selectedShape.ShapeData.ClearFixedPositions();
+        
+        // 保存到配置文件
+        selectedShape.ShapeData.SaveFixedPositionsToConfig();
+        
         Debug.Log($"已清除形状 '{selectedShape.ShapeData.shapeType}' 的所有固定位置");
         RefreshUI();
     }

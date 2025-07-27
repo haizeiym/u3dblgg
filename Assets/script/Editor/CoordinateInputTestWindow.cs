@@ -65,6 +65,22 @@ public class CoordinateInputTestWindow : EditorWindow
                     EditorGUILayout.LabelField($"  位置{i + 1}: {shapeData.fixedPositions[i]}");
                 }
             }
+            
+            // 显示配置文件中的固定位置信息
+            var config = LevelEditorConfig.Instance;
+            if (config != null)
+            {
+                var configFixedPos = config.GetFixedPositionConfig(shapeData.shapeType);
+                if (configFixedPos != null && configFixedPos.fixedPositions.Count > 0)
+                {
+                    EditorGUILayout.Space();
+                    EditorGUILayout.LabelField("⚙️ 配置文件中的固定位置:", EditorStyles.boldLabel);
+                    for (int i = 0; i < configFixedPos.fixedPositions.Count; i++)
+                    {
+                        EditorGUILayout.LabelField($"  配置位置{i + 1}: {configFixedPos.fixedPositions[i]}");
+                    }
+                }
+            }
         }
         else
         {
@@ -134,6 +150,11 @@ public class CoordinateInputTestWindow : EditorWindow
         if (GUILayout.Button("👁️ 显示固定位置"))
         {
             ShowFixedPositions();
+        }
+        
+        if (GUILayout.Button("📥 从配置文件加载"))
+        {
+            LoadFromConfig();
         }
         
         EditorGUILayout.EndHorizontal();
@@ -256,6 +277,22 @@ public class CoordinateInputTestWindow : EditorWindow
             levelEditorUI.ShowFixedPositions();
             lastResult = "已在控制台显示固定位置信息";
             Debug.Log(lastResult);
+        }
+        else
+        {
+            lastResult = "错误：请先选中一个形状";
+        }
+    }
+    
+    void LoadFromConfig()
+    {
+        LevelEditorUI levelEditorUI = FindObjectOfType<LevelEditorUI>();
+        if (levelEditorUI?.selectedShape != null)
+        {
+            levelEditorUI.selectedShape.ShapeData.LoadFixedPositionsFromConfig();
+            lastResult = "已从配置文件加载固定位置";
+            Debug.Log(lastResult);
+            Repaint();
         }
         else
         {
