@@ -37,12 +37,66 @@ public class ShapeData
     public Vector2 position;
     public float rotation;
     public List<BallData> balls = new List<BallData>();
+    public List<Vector2> fixedPositions = new List<Vector2>(); // 新增：固定位置列表
 
     public ShapeData(string type, Vector2 pos, float rot)
     {
         shapeType = type;
         position = pos;
         rotation = rot;
+        fixedPositions = new List<Vector2>();
+    }
+    
+    /// <summary>
+    /// 检查是否有固定位置配置
+    /// </summary>
+    public bool HasFixedPositions()
+    {
+        return fixedPositions != null && fixedPositions.Count > 0;
+    }
+    
+    /// <summary>
+    /// 获取最近的固定位置
+    /// </summary>
+    public Vector2 GetNearestFixedPosition(Vector2 targetPosition)
+    {
+        if (!HasFixedPositions())
+            return targetPosition;
+            
+        Vector2 nearest = fixedPositions[0];
+        float minDistance = Vector2.Distance(targetPosition, nearest);
+        
+        for (int i = 1; i < fixedPositions.Count; i++)
+        {
+            float distance = Vector2.Distance(targetPosition, fixedPositions[i]);
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                nearest = fixedPositions[i];
+            }
+        }
+        
+        return nearest;
+    }
+    
+    /// <summary>
+    /// 添加固定位置
+    /// </summary>
+    public void AddFixedPosition(Vector2 position)
+    {
+        if (fixedPositions == null)
+            fixedPositions = new List<Vector2>();
+            
+        fixedPositions.Add(position);
+    }
+    
+    /// <summary>
+    /// 清除所有固定位置
+    /// </summary>
+    public void ClearFixedPositions()
+    {
+        if (fixedPositions != null)
+            fixedPositions.Clear();
     }
 }
 
@@ -134,6 +188,9 @@ public class ExportShapeData
     public float rotation;
     [SerializeField]
     public List<ExportBallData> balls;
+    [SerializeField]
+    public List<ExportVec2> fixedPositions; // 新增：固定位置列表
+    
     public ExportShapeData(ShapeData src)
     {
         shapeType = src.shapeType;
@@ -143,6 +200,16 @@ public class ExportShapeData
         foreach (var b in src.balls)
         {
             balls.Add(new ExportBallData(b));
+        }
+        
+        // 序列化固定位置
+        fixedPositions = new List<ExportVec2>();
+        if (src.fixedPositions != null)
+        {
+            foreach (var pos in src.fixedPositions)
+            {
+                fixedPositions.Add(new ExportVec2(pos));
+            }
         }
     }
 }
@@ -279,6 +346,7 @@ public class ExportShapeDataWithIds
     public ExportVec2 position;
     public float rotation;
     public List<ExportBallDataWithIds> balls;
+    public List<ExportVec2> fixedPositions; // 新增：固定位置列表
     
     public ExportShapeDataWithIds(ShapeData src, ExportLevelDataWithIds parent)
     {
@@ -294,6 +362,16 @@ public class ExportShapeDataWithIds
         {
             balls.Add(new ExportBallDataWithIds(ball, parent));
         }
+        
+        // 序列化固定位置
+        fixedPositions = new List<ExportVec2>();
+        if (src.fixedPositions != null)
+        {
+            foreach (var pos in src.fixedPositions)
+            {
+                fixedPositions.Add(new ExportVec2(pos));
+            }
+        }
     }
     
     public ShapeData ToShapeData(ExportLevelDataWithIds parent)
@@ -308,6 +386,15 @@ public class ExportShapeDataWithIds
         foreach (var ball in balls)
         {
             shapeData.balls.Add(ball.ToBallData(parent));
+        }
+        
+        // 反序列化固定位置
+        if (fixedPositions != null)
+        {
+            foreach (var pos in fixedPositions)
+            {
+                shapeData.AddFixedPosition(new Vector2(pos.x, pos.y));
+            }
         }
         
         return shapeData;

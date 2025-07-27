@@ -325,6 +325,29 @@ public class LevelEditorDataManager
         
         // 添加到选中的形状中
         ShapeData selectedShapeData = editorUI.selectedShape.ShapeData;
+        
+        // 检查是否有固定位置配置
+        if (selectedShapeData.HasFixedPositions())
+        {
+            Debug.Log($"形状 '{selectedShapeData.shapeType}' 配置了 {selectedShapeData.fixedPositions.Count} 个固定位置");
+            
+            // 如果有固定位置，检查是否还有可用的固定位置
+            if (selectedShapeData.balls.Count >= selectedShapeData.fixedPositions.Count)
+            {
+                Debug.LogWarning($"无法添加球：形状的固定位置已用完（{selectedShapeData.fixedPositions.Count}个位置，{selectedShapeData.balls.Count}个球）");
+                return;
+            }
+            
+            // 使用下一个可用的固定位置
+            Vector2 fixedPosition = selectedShapeData.fixedPositions[selectedShapeData.balls.Count];
+            newBall.position = fixedPosition;
+            Debug.Log($"球将放置在固定位置: {fixedPosition}");
+        }
+        else
+        {
+            Debug.Log("形状没有配置固定位置，球可以自由放置");
+        }
+        
         selectedShapeData.balls.Add(newBall);
         
         Debug.Log($"球已添加到形状 '{selectedShapeData.shapeType}' 中，球数量: {selectedShapeData.balls.Count}");

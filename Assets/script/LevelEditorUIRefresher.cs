@@ -282,6 +282,10 @@ public class LevelEditorUIRefresher
     
     public void RefreshEditArea()
     {
+        // 保存当前选中的对象信息
+        ShapeData selectedShapeData = editorUI.selectedShape?.ShapeData;
+        BallData selectedBallData = editorUI.selectedBall?.BallData;
+        
         ClearEditArea();
         
         // 显示所有可见层级的内容（按层级顺序，最新的在最上层）
@@ -323,7 +327,46 @@ public class LevelEditorUIRefresher
             }
         }
         
+        // 恢复选中状态
+        RestoreSelection(selectedShapeData, selectedBallData);
+        
         Debug.Log($"刷新编辑区完成，当前激活层级: {editorUI.currentLayer?.layerName}");
+    }
+    
+    /// <summary>
+    /// 恢复选中状态
+    /// </summary>
+    private void RestoreSelection(ShapeData selectedShapeData, BallData selectedBallData)
+    {
+        if (selectedShapeData != null)
+        {
+            // 查找对应的形状对象并重新选中
+            foreach (GameObject shapeObj in shapeObjects)
+            {
+                ShapeController controller = shapeObj.GetComponent<ShapeController>();
+                if (controller != null && controller.ShapeData == selectedShapeData)
+                {
+                    editorUI.SelectShape(controller);
+                    Debug.Log($"已恢复形状选中状态: {selectedShapeData.shapeType}");
+                    break;
+                }
+            }
+        }
+        
+        if (selectedBallData != null)
+        {
+            // 查找对应的球对象并重新选中
+            foreach (GameObject ballObj in ballObjects)
+            {
+                BallController controller = ballObj.GetComponent<BallController>();
+                if (controller != null && controller.BallData == selectedBallData)
+                {
+                    editorUI.SelectBall(controller);
+                    Debug.Log($"已恢复球选中状态: {selectedBallData.ballType}");
+                    break;
+                }
+            }
+        }
     }
     
     /// <summary>
@@ -331,6 +374,10 @@ public class LevelEditorUIRefresher
     /// </summary>
     public void RefreshLayerVisibility(LayerData layer)
     {
+        // 保存当前选中的对象信息
+        ShapeData selectedShapeData = editorUI.selectedShape?.ShapeData;
+        BallData selectedBallData = editorUI.selectedBall?.BallData;
+        
         // 更新层级列表中的按钮外观
         UpdateLayerVisibilityButton(layer);
         
@@ -375,6 +422,9 @@ public class LevelEditorUIRefresher
                 }
             }
         }
+        
+        // 恢复选中状态
+        RestoreSelection(selectedShapeData, selectedBallData);
     }
     
     /// <summary>

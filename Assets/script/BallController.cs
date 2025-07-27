@@ -172,37 +172,52 @@ public class BallController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     
     public void OnBeginDrag(PointerEventData eventData)
     {
-        // 检查当前层级是否激活
-        if (editorUI != null && editorUI.currentLayer != null && !editorUI.currentLayer.isActive)
+        // 检查是否在固定位置，如果是则不允许拖动
+        if (IsInFixedPosition())
         {
-            Debug.LogWarning("无法拖拽：当前层级未激活");
+            Debug.Log("球在固定位置，不允许拖动");
             return;
         }
         
-        dragOffset = rectTransform.anchoredPosition - eventData.position;
-        SetSelected(true);
+        if (editorUI != null)
+        {
+            editorUI.SelectBall(this);
+        }
+        
+        // 计算拖动偏移
+        Vector2 localPoint;
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(rectTransform.parent as RectTransform, eventData.position, eventData.pressEventCamera, out localPoint);
+        dragOffset = (Vector2)rectTransform.localPosition - localPoint;
+        
+        Debug.Log($"开始拖动球，偏移: {dragOffset}");
     }
     
     public void OnDrag(PointerEventData eventData)
     {
-        // 检查当前层级是否激活
-        if (editorUI != null && editorUI.currentLayer != null && !editorUI.currentLayer.isActive)
+        // 检查是否在固定位置，如果是则不允许拖动
+        if (IsInFixedPosition())
         {
             return;
         }
         
-        Vector2 newPosition = eventData.position + dragOffset;
-        rectTransform.anchoredPosition = newPosition;
+        Vector2 localPoint;
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(rectTransform.parent as RectTransform, eventData.position, eventData.pressEventCamera, out localPoint);
         
-        if (ballData != null)
-        {
-            ballData.position = newPosition;
-        }
+        Vector2 newPosition = localPoint + dragOffset;
+        SetPosition(newPosition);
+        
+        Debug.Log($"拖动球到位置: {newPosition}");
     }
     
     public void OnEndDrag(PointerEventData eventData)
     {
-        // 拖拽结束时的处理
+        // 检查是否在固定位置，如果是则不允许拖动
+        if (IsInFixedPosition())
+        {
+            return;
+        }
+        
+        Debug.Log("结束拖动球");
     }
     
     public void OnPointerClick(PointerEventData eventData)
@@ -267,5 +282,29 @@ public class BallController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     {
         get { return ballData; }
         set { ballData = value; }
+    }
+
+    /// <summary>
+    /// 检查球是否在固定位置
+    /// </summary>
+    private bool IsInFixedPosition()
+    {
+        if (ballData == null || editorUI == null || editorUI.selectedShape == null)
+            return false;
+            
+        ShapeData shapeData = editorUI.selectedShape.ShapeData;
+        if (!shapeData.HasFixedPositions())
+            return false;
+            
+        // 检查当前球的位置是否匹配任何固定位置
+        for (int i = 0; i < shapeData.fixedPositions.Count; i++)
+        {
+            if (Vector2.Distance(ballData.position, shapeData.fixedPositions[i]) < 0.1f)
+            {
+                return true;
+            }
+        }
+        
+        return false;
     }
 } 

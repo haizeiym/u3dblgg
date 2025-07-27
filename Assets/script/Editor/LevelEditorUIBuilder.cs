@@ -399,6 +399,16 @@ public class LevelEditorUIBuilder
         
         GameObject exportButton = UIComponentBuilder.CreateButton(parent, "导出JSON", new Vector2(0, 0.1f));
         levelEditor.exportButton = exportButton.GetComponent<Button>();
+        
+        // 固定位置按钮
+        GameObject addFixedPositionButton = UIComponentBuilder.CreateButton(parent, "添加固定位置", new Vector2(0, 0.05f));
+        levelEditor.addFixedPositionButton = addFixedPositionButton.GetComponent<Button>();
+        
+        GameObject clearFixedPositionsButton = UIComponentBuilder.CreateButton(parent, "清除固定位置", new Vector2(0, 0.02f));
+        levelEditor.clearFixedPositionsButton = clearFixedPositionsButton.GetComponent<Button>();
+        
+        GameObject showFixedPositionsButton = UIComponentBuilder.CreateButton(parent, "显示固定位置", new Vector2(0, -0.01f));
+        levelEditor.showFixedPositionsButton = showFixedPositionsButton.GetComponent<Button>();
     }
     
     /// <summary>

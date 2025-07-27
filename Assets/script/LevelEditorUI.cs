@@ -40,6 +40,11 @@ public class LevelEditorUI : MonoBehaviour
     public Button exportButton;
     public Button importButton; // 新增：导入按钮
     
+    [Header("Fixed Positions")]
+    public Button addFixedPositionButton; // 新增：添加固定位置按钮
+    public Button clearFixedPositionsButton; // 新增：清除固定位置按钮
+    public Button showFixedPositionsButton; // 新增：显示固定位置按钮
+    
     [Header("Prefabs")]
     public GameObject shapePrefab;
     public GameObject ballPrefab;
@@ -250,6 +255,25 @@ public class LevelEditorUI : MonoBehaviour
         if (importButton == null)
         {
             Debug.LogWarning("导入按钮未创建");
+            allComponentsExist = false;
+        }
+        
+        // 检查固定位置按钮
+        if (addFixedPositionButton == null)
+        {
+            Debug.LogWarning("添加固定位置按钮未创建");
+            allComponentsExist = false;
+        }
+        
+        if (clearFixedPositionsButton == null)
+        {
+            Debug.LogWarning("清除固定位置按钮未创建");
+            allComponentsExist = false;
+        }
+        
+        if (showFixedPositionsButton == null)
+        {
+            Debug.LogWarning("显示固定位置按钮未创建");
             allComponentsExist = false;
         }
         
@@ -474,6 +498,37 @@ public class LevelEditorUI : MonoBehaviour
         {
             Debug.LogError("导入按钮为空");
         }
+        
+        // 固定位置按钮事件
+        if (addFixedPositionButton != null)
+        {
+            addFixedPositionButton.onClick.AddListener(OnAddFixedPositionClicked);
+            Debug.Log("添加固定位置按钮事件绑定成功");
+        }
+        else
+        {
+            Debug.LogError("添加固定位置按钮为空");
+        }
+        
+        if (clearFixedPositionsButton != null)
+        {
+            clearFixedPositionsButton.onClick.AddListener(OnClearFixedPositionsClicked);
+            Debug.Log("清除固定位置按钮事件绑定成功");
+        }
+        else
+        {
+            Debug.LogError("清除固定位置按钮为空");
+        }
+        
+        if (showFixedPositionsButton != null)
+        {
+            showFixedPositionsButton.onClick.AddListener(OnShowFixedPositionsClicked);
+            Debug.Log("显示固定位置按钮事件绑定成功");
+        }
+        else
+        {
+            Debug.LogError("显示固定位置按钮为空");
+        }
     }
     
     /// <summary>
@@ -665,8 +720,26 @@ public class LevelEditorUI : MonoBehaviour
     
     void OnExportClicked()
     {
-        Debug.Log("导出JSON按钮被点击！");
+        Debug.Log("导出按钮被点击！");
         ExportLevel();
+    }
+    
+    void OnAddFixedPositionClicked()
+    {
+        Debug.Log("添加固定位置按钮被点击！");
+        AddFixedPosition();
+    }
+    
+    void OnClearFixedPositionsClicked()
+    {
+        Debug.Log("清除固定位置按钮被点击！");
+        ClearFixedPositions();
+    }
+    
+    void OnShowFixedPositionsClicked()
+    {
+        Debug.Log("显示固定位置按钮被点击！");
+        ShowFixedPositions();
     }
     
     /// <summary>
@@ -925,6 +998,128 @@ public class LevelEditorUI : MonoBehaviour
     public void DeleteBall()
     {
         if (dataManager != null) dataManager.DeleteBall();
+    }
+    
+    public void AddFixedPosition()
+    {
+        if (selectedShape == null)
+        {
+            Debug.LogWarning("请先选中一个形状");
+            return;
+        }
+        
+        // 获取鼠标在编辑区的位置
+        Vector2 mousePosition = GetMousePositionInEditArea();
+        
+        // 检查位置是否有效
+        if (mousePosition == Vector2.zero && editAreaBackground != null)
+        {
+            // 如果获取失败，使用形状当前位置作为默认位置
+            mousePosition = selectedShape.ShapeData.position;
+            Debug.Log("使用形状当前位置作为固定位置");
+        }
+        
+        selectedShape.ShapeData.AddFixedPosition(mousePosition);
+        
+        Debug.Log($"已为形状 '{selectedShape.ShapeData.shapeType}' 添加固定位置: {mousePosition}");
+        RefreshUI();
+    }
+    
+    /// <summary>
+    /// 在指定位置添加固定位置
+    /// </summary>
+    public void AddFixedPosition(Vector2 position)
+    {
+        if (selectedShape == null)
+        {
+            Debug.LogWarning("请先选中一个形状");
+            return;
+        }
+        
+        selectedShape.ShapeData.AddFixedPosition(position);
+        
+        Debug.Log($"已为形状 '{selectedShape.ShapeData.shapeType}' 添加固定位置: {position}");
+        RefreshUI();
+    }
+    
+    public void ClearFixedPositions()
+    {
+        if (selectedShape == null)
+        {
+            Debug.LogWarning("请先选中一个形状");
+            return;
+        }
+        
+        selectedShape.ShapeData.ClearFixedPositions();
+        Debug.Log($"已清除形状 '{selectedShape.ShapeData.shapeType}' 的所有固定位置");
+        RefreshUI();
+    }
+    
+    public void ShowFixedPositions()
+    {
+        if (selectedShape == null)
+        {
+            Debug.LogWarning("请先选中一个形状");
+            return;
+        }
+        
+        ShapeData shapeData = selectedShape.ShapeData;
+        if (shapeData.HasFixedPositions())
+        {
+            string positions = "";
+            for (int i = 0; i < shapeData.fixedPositions.Count; i++)
+            {
+                positions += $"位置{i + 1}: {shapeData.fixedPositions[i]}\n";
+            }
+            Debug.Log($"形状 '{shapeData.shapeType}' 的固定位置:\n{positions}");
+        }
+        else
+        {
+            Debug.Log($"形状 '{shapeData.shapeType}' 没有配置固定位置");
+        }
+    }
+    
+    /// <summary>
+    /// 获取鼠标在编辑区的位置
+    /// </summary>
+    private Vector2 GetMousePositionInEditArea()
+    {
+        if (editAreaBackground == null)
+        {
+            Debug.LogWarning("编辑区背景为空，无法获取鼠标位置");
+            return Vector2.zero;
+        }
+            
+        // 获取鼠标屏幕位置
+        Vector3 mouseScreenPos = Input.mousePosition;
+        
+        // 尝试转换为编辑区的本地坐标
+        Vector2 localPoint;
+        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            editAreaBackground.rectTransform, 
+            mouseScreenPos, 
+            null, 
+            out localPoint))
+        {
+            Debug.Log($"成功获取鼠标位置: 屏幕坐标={mouseScreenPos}, 本地坐标={localPoint}");
+            return localPoint;
+        }
+        
+        // 如果转换失败，尝试使用世界坐标转换
+        Vector3 worldPoint;
+        if (RectTransformUtility.ScreenPointToWorldPointInRectangle(
+            editAreaBackground.rectTransform,
+            mouseScreenPos,
+            null,
+            out worldPoint))
+        {
+            Vector2 localFromWorld = editAreaBackground.rectTransform.InverseTransformPoint(worldPoint);
+            Debug.Log($"通过世界坐标获取鼠标位置: 屏幕坐标={mouseScreenPos}, 世界坐标={worldPoint}, 本地坐标={localFromWorld}");
+            return localFromWorld;
+        }
+        
+        Debug.LogWarning($"无法将鼠标位置转换为编辑区坐标: 屏幕坐标={mouseScreenPos}");
+        return Vector2.zero;
     }
     
     public void ExportLevel()
