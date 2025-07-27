@@ -3,7 +3,7 @@ using UnityEditor;
 
 public class SelectionTestWindow : EditorWindow
 {
-    [MenuItem("Tools/Level Editor/Test Selection")]
+    // [MenuItem("Tools/Level Editor/Test Selection")]
     public static void ShowWindow()
     {
         GetWindow<SelectionTestWindow>("选中状态测试");

@@ -3,7 +3,7 @@ using UnityEditor;
 
 public class RuntimeLevelNameTestWindow : EditorWindow
 {
-    [MenuItem("Tools/Level Editor/Test Runtime Level Name")]
+    // [MenuItem("Tools/Level Editor/Test Runtime Level Name")]
     public static void ShowWindow()
     {
         GetWindow<RuntimeLevelNameTestWindow>("运行时关卡名称测试");

@@ -3,7 +3,7 @@ using UnityEditor;
 
 public class PauseGameLevelIndexTestWindow : EditorWindow
 {
-    [MenuItem("Tools/Level Editor/Test Pause Game Level Index")]
+    // [MenuItem("Tools/Level Editor/Test Pause Game Level Index")]
     public static void ShowWindow()
     {
         GetWindow<PauseGameLevelIndexTestWindow>("暂停游戏关卡索引测试");

@@ -11,7 +11,6 @@ public class CoordinateInputTestWindow : EditorWindow
     private Vector2 lastAddedPosition = Vector2.zero;
     private string lastResult = "";
     
-    [MenuItem("Tools/Level Editor/Test Coordinate Input")]
     public static void ShowWindow()
     {
         var window = GetWindow<CoordinateInputTestWindow>("固定位置编辑器");

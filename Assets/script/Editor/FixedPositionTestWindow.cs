@@ -7,7 +7,7 @@ public class FixedPositionTestWindow : EditorWindow
     private float inputX = 0f;
     private float inputY = 0f;
     
-    [MenuItem("Tools/Level Editor/Test Fixed Positions")]
+    // [MenuItem("Tools/Level Editor/Test Fixed Positions")]
     public static void ShowWindow()
     {
         GetWindow<FixedPositionTestWindow>("固定位置测试");

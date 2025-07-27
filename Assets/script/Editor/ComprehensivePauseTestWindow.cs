@@ -3,7 +3,7 @@ using UnityEditor;
 
 public class ComprehensivePauseTestWindow : EditorWindow
 {
-    [MenuItem("Tools/Level Editor/Comprehensive Pause Test")]
+    // [MenuItem("Tools/Level Editor/Comprehensive Pause Test")]
     public static void ShowWindow()
     {
         GetWindow<ComprehensivePauseTestWindow>("全面暂停测试");

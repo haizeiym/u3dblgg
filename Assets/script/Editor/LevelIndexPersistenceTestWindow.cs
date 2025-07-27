@@ -3,7 +3,7 @@ using UnityEditor;
 
 public class LevelIndexPersistenceTestWindow : EditorWindow
 {
-    [MenuItem("Tools/Level Editor/Test Level Index Persistence")]
+    // [MenuItem("Tools/Level Editor/Test Level Index Persistence")]
     public static void ShowWindow()
     {
         GetWindow<LevelIndexPersistenceTestWindow>("关卡索引持久性测试");
