@@ -37,6 +37,9 @@ public class ConfigPreviewUI : MonoBehaviour
     private GridLayoutGroup ballGridLayout;
     private GridLayoutGroup backgroundGridLayout;
     
+    // 防止重复刷新的标志
+    private bool isRefreshing = false;
+    
     void Start()
     {
         SetupEventListeners();
@@ -136,10 +139,42 @@ public class ConfigPreviewUI : MonoBehaviour
     /// </summary>
     public void ShowPreview()
     {
-        if (previewPanel != null)
+        try
         {
-            previewPanel.SetActive(true);
+            if (previewPanel != null)
+            {
+                previewPanel.SetActive(true);
+                
+                // 延迟刷新，避免在激活过程中立即刷新导致卡死
+                StartCoroutine(DelayedRefreshPreview());
+            }
+            else
+            {
+                Debug.LogError("previewPanel为空，无法显示预览");
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"显示预览时发生异常: {e.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// 延迟刷新预览，避免卡死
+    /// </summary>
+    System.Collections.IEnumerator DelayedRefreshPreview()
+    {
+        // 等待一帧，确保UI完全激活
+        yield return null;
+        
+        // 再次检查组件状态
+        if (previewPanel != null && previewPanel.activeSelf && !isRefreshing)
+        {
             RefreshPreview();
+        }
+        else if (isRefreshing)
+        {
+            Debug.LogWarning("延迟刷新时检测到正在刷新中，跳过");
         }
     }
     
@@ -159,31 +194,77 @@ public class ConfigPreviewUI : MonoBehaviour
     /// </summary>
     public void RefreshPreview()
     {
-        Debug.Log("开始刷新配置预览...");
-        
-        // 检查配置实例
-        if (LevelEditorConfig.Instance == null)
+        // 防止重复刷新
+        if (isRefreshing)
         {
-            Debug.LogError("LevelEditorConfig.Instance 为空！");
+            Debug.LogWarning("正在刷新中，跳过重复刷新请求");
             return;
         }
         
-        // 强制重新加载配置
-        LevelEditorConfig.Instance.LoadConfigFromFile();
+        Debug.Log("开始刷新配置预览...");
+        isRefreshing = true;
         
-        // 检查配置数据
-        var config = LevelEditorConfig.Instance;
-        Debug.Log($"配置加载完成 - 形状: {config.shapeTypes?.Count ?? 0}, 球: {config.ballTypes?.Count ?? 0}, 背景: {config.backgroundConfigs?.Count ?? 0}");
-        
-        ClearPreviewItems();
-        CreateShapePreviews();
-        CreateBallPreviews();
-        CreateBackgroundPreviews();
-        
-        // 重置滚动位置
-        ResetScrollPositions();
-        
-        Debug.Log($"刷新完成，共显示 {previewItems.Count} 个预览项");
+        try
+        {
+            // 检查预览面板是否激活
+            if (previewPanel == null || !previewPanel.activeSelf)
+            {
+                Debug.LogWarning("预览面板未激活，跳过刷新");
+                return;
+            }
+            
+            // 检查配置实例
+            if (LevelEditorConfig.Instance == null)
+            {
+                Debug.LogError("LevelEditorConfig.Instance 为空！");
+                return;
+            }
+            
+            // 检查UI组件是否有效
+            if (shapePreviewContent == null || ballPreviewContent == null || backgroundPreviewContent == null)
+            {
+                Debug.LogWarning("预览UI组件为空，跳过刷新");
+                return;
+            }
+            
+            // 获取当前配置数据（不重新加载，避免无限循环）
+            var config = LevelEditorConfig.Instance;
+            if (config == null)
+            {
+                Debug.LogError("配置实例为空！");
+                return;
+            }
+            
+            Debug.Log($"配置数据 - 形状: {config.shapeTypes?.Count ?? 0}, 球: {config.ballTypes?.Count ?? 0}, 背景: {config.backgroundConfigs?.Count ?? 0}");
+            
+            // 限制预览项数量，避免创建过多导致卡死
+            int maxItems = 100;
+            if (previewItems.Count > maxItems)
+            {
+                Debug.LogWarning($"预览项数量过多({previewItems.Count})，限制为{maxItems}个");
+                ClearPreviewItems();
+            }
+            
+            ClearPreviewItems();
+            CreateShapePreviews();
+            CreateBallPreviews();
+            CreateBackgroundPreviews();
+            
+            // 重置滚动位置
+            ResetScrollPositions();
+            
+            Debug.Log($"刷新完成，共显示 {previewItems.Count} 个预览项");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"刷新配置预览时发生异常: {e.Message}");
+            Debug.LogError($"异常堆栈: {e.StackTrace}");
+        }
+        finally
+        {
+            // 确保刷新标志被重置
+            isRefreshing = false;
+        }
     }
     
     /// <summary>
@@ -214,7 +295,14 @@ public class ConfigPreviewUI : MonoBehaviour
         {
             if (item != null)
             {
-                DestroyImmediate(item);
+                try
+                {
+                    DestroyImmediate(item);
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogWarning($"销毁预览项时发生异常: {e.Message}");
+                }
             }
         }
         previewItems.Clear();
@@ -246,7 +334,11 @@ public class ConfigPreviewUI : MonoBehaviour
         
         Debug.Log($"创建形状预览，共 {config.shapeTypes.Count} 个形状类型");
         
-        for (int i = 0; i < config.shapeTypes.Count; i++)
+        // 限制创建数量，避免卡死
+        int maxShapes = 50;
+        int createCount = Mathf.Min(config.shapeTypes.Count, maxShapes);
+        
+        for (int i = 0; i < createCount; i++)
         {
             var shapeType = config.shapeTypes[i];
             if (shapeType == null)
@@ -255,18 +347,30 @@ public class ConfigPreviewUI : MonoBehaviour
                 continue;
             }
             
-            GameObject previewItem = CreatePreviewItem(shapePreviewItemPrefab, shapePreviewContent);
-            
-            if (previewItem != null)
+            try
             {
-                SetupShapePreviewItem(previewItem, shapeType, i);
-                previewItems.Add(previewItem);
-                Debug.Log($"成功创建形状预览: {shapeType.name}");
+                GameObject previewItem = CreatePreviewItem(shapePreviewItemPrefab, shapePreviewContent);
+                
+                if (previewItem != null)
+                {
+                    SetupShapePreviewItem(previewItem, shapeType, i);
+                    previewItems.Add(previewItem);
+                    Debug.Log($"成功创建形状预览: {shapeType.name}");
+                }
+                else
+                {
+                    Debug.LogError($"创建形状预览项失败: {shapeType.name}");
+                }
             }
-            else
+            catch (System.Exception e)
             {
-                Debug.LogError($"创建形状预览项失败: {shapeType.name}");
+                Debug.LogError($"创建形状预览[{i}]时发生异常: {e.Message}");
             }
+        }
+        
+        if (config.shapeTypes.Count > maxShapes)
+        {
+            Debug.LogWarning($"形状类型数量({config.shapeTypes.Count})超过限制({maxShapes})，只显示前{maxShapes}个");
         }
     }
     
@@ -282,16 +386,43 @@ public class ConfigPreviewUI : MonoBehaviour
         
         Debug.Log($"创建球预览，共 {config.ballTypes.Count} 个球类型");
         
-        for (int i = 0; i < config.ballTypes.Count; i++)
+        // 限制创建数量，避免卡死
+        int maxBalls = 50;
+        int createCount = Mathf.Min(config.ballTypes.Count, maxBalls);
+        
+        for (int i = 0; i < createCount; i++)
         {
             var ballType = config.ballTypes[i];
-            GameObject previewItem = CreatePreviewItem(ballPreviewItemPrefab, ballPreviewContent);
-            
-            if (previewItem != null)
+            if (ballType == null)
             {
-                SetupBallPreviewItem(previewItem, ballType, i);
-                previewItems.Add(previewItem);
+                Debug.LogWarning($"球类型[{i}]为空，跳过");
+                continue;
             }
+            
+            try
+            {
+                GameObject previewItem = CreatePreviewItem(ballPreviewItemPrefab, ballPreviewContent);
+                
+                if (previewItem != null)
+                {
+                    SetupBallPreviewItem(previewItem, ballType, i);
+                    previewItems.Add(previewItem);
+                    Debug.Log($"成功创建球预览: {ballType.name}");
+                }
+                else
+                {
+                    Debug.LogError($"创建球预览项失败: {ballType.name}");
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"创建球预览[{i}]时发生异常: {e.Message}");
+            }
+        }
+        
+        if (config.ballTypes.Count > maxBalls)
+        {
+            Debug.LogWarning($"球类型数量({config.ballTypes.Count})超过限制({maxBalls})，只显示前{maxBalls}个");
         }
     }
     
@@ -307,16 +438,43 @@ public class ConfigPreviewUI : MonoBehaviour
         
         Debug.Log($"创建背景预览，共 {config.backgroundConfigs.Count} 个背景配置");
         
-        for (int i = 0; i < config.backgroundConfigs.Count; i++)
+        // 限制创建数量，避免卡死
+        int maxBackgrounds = 50;
+        int createCount = Mathf.Min(config.backgroundConfigs.Count, maxBackgrounds);
+        
+        for (int i = 0; i < createCount; i++)
         {
             var backgroundConfig = config.backgroundConfigs[i];
-            GameObject previewItem = CreatePreviewItem(backgroundPreviewItemPrefab, backgroundPreviewContent);
-            
-            if (previewItem != null)
+            if (backgroundConfig == null)
             {
-                SetupBackgroundPreviewItem(previewItem, backgroundConfig, i);
-                previewItems.Add(previewItem);
+                Debug.LogWarning($"背景配置[{i}]为空，跳过");
+                continue;
             }
+            
+            try
+            {
+                GameObject previewItem = CreatePreviewItem(backgroundPreviewItemPrefab, backgroundPreviewContent);
+                
+                if (previewItem != null)
+                {
+                    SetupBackgroundPreviewItem(previewItem, backgroundConfig, i);
+                    previewItems.Add(previewItem);
+                    Debug.Log($"成功创建背景预览: {backgroundConfig.name}");
+                }
+                else
+                {
+                    Debug.LogError($"创建背景预览项失败: {backgroundConfig.name}");
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"创建背景预览[{i}]时发生异常: {e.Message}");
+            }
+        }
+        
+        if (config.backgroundConfigs.Count > maxBackgrounds)
+        {
+            Debug.LogWarning($"背景配置数量({config.backgroundConfigs.Count})超过限制({maxBackgrounds})，只显示前{maxBackgrounds}个");
         }
     }
     

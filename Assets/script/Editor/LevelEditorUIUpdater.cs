@@ -130,6 +130,13 @@ public class LevelEditorUIUpdater : IUIUpdater
     {
         Debug.Log("配置已重新加载，更新所有UI...");
         
+        // 检查editorUI是否有效
+        if (editorUI == null)
+        {
+            Debug.LogWarning("editorUI为空，跳过UI更新");
+            return;
+        }
+        
         // 更新所有UI组件
         UpdateShapeTypeButtons();
         UpdateBallTypeButtons();
@@ -153,7 +160,11 @@ public class LevelEditorUIUpdater : IUIUpdater
     /// </summary>
     void UpdateShapeTypeButtons()
     {
-        if (editorUI == null || editorUI.rightPanel == null) return;
+        if (editorUI?.rightPanel == null)
+        {
+            Debug.LogWarning("无法更新形状类型按钮：editorUI或rightPanel为空");
+            return;
+        }
         
         // 清除现有的形状类型按钮
         ClearShapeTypeButtons();
@@ -164,6 +175,10 @@ public class LevelEditorUIUpdater : IUIUpdater
             uiBuilder.CreateShapeTypeButtons(editorUI.rightPanel, new Vector2(0, 0.6f));
             Debug.Log("形状类型按钮已重新创建");
         }
+        else
+        {
+            Debug.LogWarning("uiBuilder为空，无法重新创建形状类型按钮");
+        }
     }
     
     /// <summary>
@@ -171,7 +186,11 @@ public class LevelEditorUIUpdater : IUIUpdater
     /// </summary>
     void UpdateBallTypeButtons()
     {
-        if (editorUI == null || editorUI.rightPanel == null) return;
+        if (editorUI?.rightPanel == null)
+        {
+            Debug.LogWarning("无法更新球类型按钮：editorUI或rightPanel为空");
+            return;
+        }
         
         // 清除现有的球类型按钮
         ClearBallTypeButtons();
@@ -182,6 +201,10 @@ public class LevelEditorUIUpdater : IUIUpdater
             uiBuilder.CreateBallTypeButtons(editorUI.rightPanel, new Vector2(0, 0.4f));
             Debug.Log("球类型按钮已重新创建");
         }
+        else
+        {
+            Debug.LogWarning("uiBuilder为空，无法重新创建球类型按钮");
+        }
     }
     
     /// <summary>
@@ -189,15 +212,19 @@ public class LevelEditorUIUpdater : IUIUpdater
     /// </summary>
     void ClearShapeTypeButtons()
     {
-        if (editorUI.rightPanel == null) return;
+        if (editorUI?.rightPanel == null) return;
         
         // 查找并销毁形状类型相关的UI元素
         Transform[] children = editorUI.rightPanel.GetComponentsInChildren<Transform>();
         foreach (Transform child in children)
         {
-            if (child.name == "TypeLabel" || child.name.Contains("ShapeType"))
+            // 添加null检查，避免访问已销毁的对象
+            if (child != null && (child.name == "TypeLabel" || child.name.Contains("ShapeType")))
             {
-                Object.DestroyImmediate(child.gameObject);
+                if (child.gameObject != null)
+                {
+                    Object.DestroyImmediate(child.gameObject);
+                }
             }
         }
         
@@ -209,15 +236,19 @@ public class LevelEditorUIUpdater : IUIUpdater
     /// </summary>
     void ClearBallTypeButtons()
     {
-        if (editorUI.rightPanel == null) return;
+        if (editorUI?.rightPanel == null) return;
         
         // 查找并销毁球类型相关的UI元素
         Transform[] children = editorUI.rightPanel.GetComponentsInChildren<Transform>();
         foreach (Transform child in children)
         {
-            if (child.name == "BallTypeLabel" || child.name.Contains("BallType"))
+            // 添加null检查，避免访问已销毁的对象
+            if (child != null && (child.name == "BallTypeLabel" || child.name.Contains("BallType")))
             {
-                Object.DestroyImmediate(child.gameObject);
+                if (child.gameObject != null)
+                {
+                    Object.DestroyImmediate(child.gameObject);
+                }
             }
         }
         

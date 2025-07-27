@@ -712,7 +712,14 @@ public class LevelEditorUI : MonoBehaviour
     void OnPreviewClicked()
     {
         Debug.Log("预览按钮被点击！");
-        ShowConfigPreview();
+        try
+        {
+            ShowConfigPreview();
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"预览按钮点击时发生异常: {e.Message}");
+        }
     }
     
     void OnImportClicked()
@@ -1320,13 +1327,20 @@ public class LevelEditorUI : MonoBehaviour
     /// </summary>
     public void ShowConfigPreview()
     {
-        if (configPreviewUI != null)
+        try
         {
-            configPreviewUI.ShowPreview();
+            if (configPreviewUI != null)
+            {
+                configPreviewUI.ShowPreview();
+            }
+            else
+            {
+                Debug.LogWarning("ConfigPreviewUI组件未设置");
+            }
         }
-        else
+        catch (System.Exception e)
         {
-            Debug.LogWarning("ConfigPreviewUI组件未设置");
+            Debug.LogError($"显示配置预览时发生异常: {e.Message}");
         }
     }
     

@@ -965,7 +965,20 @@ public class LevelEditorConfig : ScriptableObject
     /// </summary>
     public void TriggerConfigReloaded()
     {
-        OnConfigReloaded?.Invoke();
+        try
+        {
+            // 检查是否有订阅者，避免在对象已销毁时触发事件
+            if (OnConfigReloaded != null)
+            {
+                OnConfigReloaded?.Invoke();
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"触发配置重新加载事件时发生异常: {e.Message}");
+            // 清除可能已失效的事件订阅者
+            OnConfigReloaded = null;
+        }
     }
     
     /// <summary>
