@@ -14,12 +14,29 @@ public class CoordinateInputTestWindow : EditorWindow
     [MenuItem("Tools/Level Editor/Test Coordinate Input")]
     public static void ShowWindow()
     {
-        GetWindow<CoordinateInputTestWindow>("坐标输入测试");
+        var window = GetWindow<CoordinateInputTestWindow>("固定位置编辑器");
+        window.minSize = new Vector2(400, 600);
+        window.maxSize = new Vector2(500, 800);
+    }
+    
+    /// <summary>
+    /// 公共方法，供其他脚本调用打开窗口
+    /// </summary>
+    public static void OpenWindow()
+    {
+        ShowWindow();
+    }
+    
+    void OnEnable()
+    {
+        // 窗口打开时自动获取当前选中形状的位置
+        InitializeWithSelectedShape();
     }
     
     void OnGUI()
     {
-        GUILayout.Label("坐标输入功能测试", EditorStyles.boldLabel);
+        GUILayout.Label("🎯 固定位置编辑器", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("为选中的形状添加精确的固定位置", EditorStyles.miniLabel);
         
         EditorGUILayout.Space();
         
@@ -27,7 +44,7 @@ public class CoordinateInputTestWindow : EditorWindow
         LevelEditorUI levelEditorUI = FindObjectOfType<LevelEditorUI>();
         if (levelEditorUI == null)
         {
-            EditorGUILayout.HelpBox("场景中未找到LevelEditorUI", MessageType.Warning);
+            EditorGUILayout.HelpBox("❌ 场景中未找到LevelEditorUI", MessageType.Warning);
             return;
         }
         
@@ -35,19 +52,43 @@ public class CoordinateInputTestWindow : EditorWindow
         if (levelEditorUI.selectedShape != null)
         {
             ShapeData shapeData = levelEditorUI.selectedShape.ShapeData;
-            EditorGUILayout.LabelField("当前选中形状:", shapeData.shapeType);
-            EditorGUILayout.LabelField("形状位置:", shapeData.position.ToString());
-            EditorGUILayout.LabelField("固定位置数量:", shapeData.fixedPositions.Count.ToString());
+            EditorGUILayout.LabelField("✅ 当前选中形状:", shapeData.shapeType);
+            EditorGUILayout.LabelField("📍 形状位置:", shapeData.position.ToString());
+            EditorGUILayout.LabelField("📌 固定位置数量:", shapeData.fixedPositions.Count.ToString());
+            
+            // 显示当前固定位置列表
+            if (shapeData.HasFixedPositions())
+            {
+                EditorGUILayout.LabelField("📋 当前固定位置:", EditorStyles.boldLabel);
+                for (int i = 0; i < shapeData.fixedPositions.Count; i++)
+                {
+                    EditorGUILayout.LabelField($"  位置{i + 1}: {shapeData.fixedPositions[i]}");
+                }
+            }
         }
         else
         {
-            EditorGUILayout.HelpBox("请先选中一个形状", MessageType.Info);
+            EditorGUILayout.HelpBox("⚠️ 请先选中一个形状", MessageType.Info);
+            
+            // 如果没有选中形状，显示所有可用形状
+            if (levelEditorUI.currentLevel != null)
+            {
+                EditorGUILayout.LabelField("📝 可用形状:", EditorStyles.boldLabel);
+                foreach (var layer in levelEditorUI.currentLevel.layers)
+                {
+                    foreach (var shape in layer.shapes)
+                    {
+                        EditorGUILayout.LabelField($"  {shape.shapeType} (位置: {shape.position})");
+                    }
+                }
+            }
+            return;
         }
         
         EditorGUILayout.Space();
         
         // 坐标输入区域
-        EditorGUILayout.LabelField("坐标输入:", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("🎮 坐标输入:", EditorStyles.boldLabel);
         
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("X坐标:", GUILayout.Width(50));
@@ -58,20 +99,21 @@ public class CoordinateInputTestWindow : EditorWindow
         
         EditorGUILayout.Space();
         
-        // 操作按钮
+        // 主要操作按钮
+        EditorGUILayout.LabelField("🚀 主要操作:", EditorStyles.boldLabel);
         EditorGUILayout.BeginHorizontal();
         
-        if (GUILayout.Button("添加固定位置"))
+        if (GUILayout.Button("➕ 添加固定位置", GUILayout.Height(30)))
         {
             TestAddFixedPosition();
         }
         
-        if (GUILayout.Button("获取鼠标位置"))
+        if (GUILayout.Button("🖱️ 获取鼠标位置", GUILayout.Height(30)))
         {
             GetMousePosition();
         }
         
-        if (GUILayout.Button("使用形状位置"))
+        if (GUILayout.Button("📍 使用形状位置", GUILayout.Height(30)))
         {
             UseShapePosition();
         }
@@ -80,8 +122,26 @@ public class CoordinateInputTestWindow : EditorWindow
         
         EditorGUILayout.Space();
         
+        // 快速操作按钮
+        EditorGUILayout.LabelField("⚡ 快速操作:", EditorStyles.boldLabel);
+        EditorGUILayout.BeginHorizontal();
+        
+        if (GUILayout.Button("🗑️ 清除所有固定位置"))
+        {
+            ClearAllFixedPositions();
+        }
+        
+        if (GUILayout.Button("👁️ 显示固定位置"))
+        {
+            ShowFixedPositions();
+        }
+        
+        EditorGUILayout.EndHorizontal();
+        
+        EditorGUILayout.Space();
+        
         // 显示结果
-        EditorGUILayout.LabelField("测试结果:", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("📊 操作结果:", EditorStyles.boldLabel);
         EditorGUILayout.LabelField($"当前输入: ({inputX:F2}, {inputY:F2})", EditorStyles.helpBox);
         
         if (!string.IsNullOrEmpty(lastResult))
@@ -96,18 +156,30 @@ public class CoordinateInputTestWindow : EditorWindow
         
         EditorGUILayout.Space();
         
-        // 显示所有固定位置
-        if (levelEditorUI.selectedShape != null)
+        // 使用说明
+        EditorGUILayout.LabelField("📖 使用说明:", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox(
+            "1️⃣ 手动输入坐标值，然后点击'添加固定位置'\n" +
+            "2️⃣ 点击'获取鼠标位置'自动获取当前鼠标在编辑区的位置\n" +
+            "3️⃣ 点击'使用形状位置'使用当前选中形状的位置\n" +
+            "4️⃣ 使用'清除所有固定位置'可以清除当前形状的所有固定位置", 
+            MessageType.Info);
+    }
+    
+    /// <summary>
+    /// 初始化窗口时获取当前选中形状的信息
+    /// </summary>
+    void InitializeWithSelectedShape()
+    {
+        LevelEditorUI levelEditorUI = FindObjectOfType<LevelEditorUI>();
+        if (levelEditorUI?.selectedShape != null)
         {
-            ShapeData shapeData = levelEditorUI.selectedShape.ShapeData;
-            if (shapeData.HasFixedPositions())
-            {
-                EditorGUILayout.LabelField("当前固定位置列表:", EditorStyles.boldLabel);
-                for (int i = 0; i < shapeData.fixedPositions.Count; i++)
-                {
-                    EditorGUILayout.LabelField($"位置{i + 1}: {shapeData.fixedPositions[i]}");
-                }
-            }
+            Vector2 shapePos = levelEditorUI.selectedShape.ShapeData.position;
+            inputX = shapePos.x;
+            inputY = shapePos.y;
+            
+            lastResult = $"窗口已初始化，使用形状位置: ({inputX:F2}, {inputY:F2})";
+            Debug.Log(lastResult);
         }
     }
     
@@ -153,6 +225,37 @@ public class CoordinateInputTestWindow : EditorWindow
             lastResult = $"使用形状位置: ({inputX:F2}, {inputY:F2})";
             Debug.Log(lastResult);
             Repaint();
+        }
+        else
+        {
+            lastResult = "错误：请先选中一个形状";
+        }
+    }
+    
+    void ClearAllFixedPositions()
+    {
+        LevelEditorUI levelEditorUI = FindObjectOfType<LevelEditorUI>();
+        if (levelEditorUI?.selectedShape != null)
+        {
+            levelEditorUI.ClearFixedPositions();
+            lastResult = "已清除所有固定位置";
+            Debug.Log(lastResult);
+            Repaint();
+        }
+        else
+        {
+            lastResult = "错误：请先选中一个形状";
+        }
+    }
+    
+    void ShowFixedPositions()
+    {
+        LevelEditorUI levelEditorUI = FindObjectOfType<LevelEditorUI>();
+        if (levelEditorUI?.selectedShape != null)
+        {
+            levelEditorUI.ShowFixedPositions();
+            lastResult = "已在控制台显示固定位置信息";
+            Debug.Log(lastResult);
         }
         else
         {

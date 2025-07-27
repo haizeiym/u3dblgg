@@ -727,7 +727,50 @@ public class LevelEditorUI : MonoBehaviour
     void OnAddFixedPositionClicked()
     {
         Debug.Log("添加固定位置按钮被点击！");
-        AddFixedPosition();
+        
+        // 检查是否选中了形状
+        if (selectedShape == null)
+        {
+            Debug.LogWarning("请先选中一个形状");
+            return;
+        }
+        
+        // 弹出坐标输入测试窗口
+        #if UNITY_EDITOR
+        // 直接调用固定位置窗口
+        try
+        {
+            var assembly = System.Reflection.Assembly.Load("Assembly-CSharp-Editor");
+            var windowType = assembly.GetType("CoordinateInputTestWindow");
+            if (windowType != null)
+            {
+                var openWindowMethod = windowType.GetMethod("OpenWindow", 
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                if (openWindowMethod != null)
+                {
+                    openWindowMethod.Invoke(null, null);
+                    Debug.Log("已打开固定位置编辑器窗口");
+                }
+                else
+                {
+                    Debug.LogError("未找到OpenWindow方法");
+                }
+            }
+            else
+            {
+                Debug.LogError("未找到CoordinateInputTestWindow类型");
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"打开固定位置编辑器窗口失败: {e.Message}");
+        }
+        #else
+        // 运行时直接使用形状当前位置添加固定位置
+        Vector2 currentPosition = selectedShape.ShapeData.position;
+        AddFixedPosition(currentPosition);
+        Debug.Log($"运行时模式：已使用形状当前位置添加固定位置: {currentPosition}");
+        #endif
     }
     
     void OnClearFixedPositionsClicked()
